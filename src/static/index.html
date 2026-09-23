@@ -52,6 +52,10 @@
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
+                    <span id="auto-refresh-badge" class="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        10초 자동 갱신
+                    </span>
+                    <span id="last-updated-badge" class="hidden md:inline text-[10px] font-mono text-gray-400"></span>
                 </div>
                 <p class="text-xs text-gray-400 mt-0.5">거래량 오더플로우 흡수(Volume Absorption) + 외부 거시/변동성 요인 기반 실시간 방향 예측</p>
             </div>
@@ -594,6 +598,12 @@
                         candleSeries.setMarkers(markers);
                         chart.timeScale().fitContent();
                     }
+                }
+
+                const badge = document.getElementById('last-updated-badge');
+                if (badge) {
+                    const d = new Date();
+                    badge.textContent = '• 갱신 ' + d.toTimeString().split(' ')[0];
                 }
             } catch (err) {
                 console.error("Load data error:", err);
