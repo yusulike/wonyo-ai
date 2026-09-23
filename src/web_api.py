@@ -22,7 +22,7 @@ from src.wonyo_model import WonyoAIModel, ActionType
 from src.feature_extractor import WonyoFeatureExtractor
 from src.news_sentiment import news_engine
 
-app = FastAPI(title="Wonyo-AI Institutional Terminal", version="1.0.0")
+app = FastAPI(title="Wonyo-AI Institutional Terminal", version="1.0.0", redirect_slashes=False)
 
 # Initialize engines
 risk_engine = WonyoRiskEngine(
@@ -66,6 +66,8 @@ def load_replay_candles(limit: int = 150) -> pd.DataFrame:
     return fetch_live_binance_candles(limit=limit)
 
 @app.get("/api/predict")
+@app.get("/api/predict/")
+@app.get("/predict")
 def get_prediction(
     mode: str = Query("live", pattern="^(live|replay)$"),
     interval: str = Query("15m", pattern="^(5m|15m|1h)$"),
@@ -302,6 +304,8 @@ def get_prediction(
         return JSONResponse(status_code=500, content={"status": "ERROR", "message": str(e)})
 
 @app.get("/api/candles")
+@app.get("/api/candles/")
+@app.get("/candles")
 def get_candles(
     mode: str = Query("live", pattern="^(live|replay)$"),
     interval: str = Query("15m", pattern="^(5m|15m|1h)$"),
@@ -334,12 +338,25 @@ def get_candles(
         return JSONResponse(status_code=500, content={"status": "ERROR", "message": str(e)})
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/api", response_class=HTMLResponse)
+@app.get("/api/", response_class=HTMLResponse)
+@app.get("/api/index", response_class=HTMLResponse)
+@app.get("/api/index.py", response_class=HTMLResponse)
 def serve_index():
-    index_path = Path(__file__).resolve().parent / "static" / "index.html"
-    if not index_path.exists():
-        return "<h1>Wonyo-AI Terminal UI Loading...</h1>"
-    with open(index_path, "r", encoding="utf-8") as f:
-        return f.read()
+    candidates = [
+        Path(__file__).resolve().parent / "static" / "index.html",
+        Path(__file__).resolve().parent.parent / "public" / "index.html",
+        Path("public/index.html"),
+        Path("src/static/index.html")
+    ]
+    for p in candidates:
+        if p.exists():
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    return f.read()
+            except Exception:
+                pass
+    return "<h1>Wonyo-AI Terminal UI Loading...</h1>"
 
 # Serve static directory if needed
 static_dir = Path(__file__).resolve().parent / "static"
