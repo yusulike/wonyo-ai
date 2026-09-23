@@ -1,0 +1,14 @@
+{
+  "total_executions": 1444583,
+  "total_trade_cycles": 2589,
+  "win_rate_pct": 77.79065276168404,
+  "avg_win_pct": 1.1274087619234796,
+  "avg_loss_pct": -1.4939708653038322,
+  "payoff_ratio": 0.7546390549551956,
+  "median_holding_time_min": 25.86481823333333,
+  "p25_holding_time_min": 4.43538135,
+  "p75_holding_time_min": 290.0517133166667,
+  "p90_holding_time_min": 1437.3844641433338,
+  "long_ratio_pct": 49.40131324835844,
+  "short_ratio_pct": 50.598686751641566
+}

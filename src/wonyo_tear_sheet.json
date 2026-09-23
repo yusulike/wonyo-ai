@@ -1,0 +1,16 @@
+{
+  "initial_btc": 10.0,
+  "final_btc": 9.81563343777964,
+  "total_return_btc_pct": -1.8436656222035985,
+  "btc_benchmark_return_pct": 43.65306897861905,
+  "alpha_excess_return_pct": -45.49673460082265,
+  "sharpe_ratio": -1.8217567423784753,
+  "sortino_ratio": -0.4485810867747122,
+  "calmar_ratio": -0.650328776463628,
+  "max_drawdown_pct": 2.834974691154102,
+  "total_trades": 79,
+  "win_rate_pct": 49.36708860759494,
+  "profit_factor": 0.7979595750856292,
+  "avg_bars_held": 4.8354430379746836,
+  "maker_rebates_earned_btc": 0.02436837112646142
+}

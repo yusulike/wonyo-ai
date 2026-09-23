@@ -1,0 +1,18 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Data files & Raw BitMEX archives (>100MB blocked by GitHub)
+aoa_public_2021-12-31_with_letter*
+*.zip
+*.parquet
+*.csv
+.pytest_cache/
+.vercel
