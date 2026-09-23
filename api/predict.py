@@ -9,6 +9,7 @@ from src.web_api import get_prediction
 
 app = FastAPI()
 
+@app.api_route("/", methods=["GET"])
 @app.api_route("/{full_path:path}", methods=["GET"])
 def handle_predict(request: Request, full_path: str = ""):
     params = dict(request.query_params)

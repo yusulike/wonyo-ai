@@ -52,3 +52,20 @@ def test_vercel_path_fix_middleware():
     data = resp.json()
     assert data["status"] == "SUCCESS"
     assert "intuitive_verdict" in data
+
+def test_standalone_predict_app():
+    from api.predict import app as pred_app
+    c = TestClient(pred_app)
+    resp1 = c.get("/?mode=live&interval=15m")
+    assert resp1.status_code == 200
+    assert resp1.json()["status"] == "SUCCESS"
+    resp2 = c.get("/api/predict?mode=live&interval=15m")
+    assert resp2.status_code == 200
+    assert resp2.json()["status"] == "SUCCESS"
+
+def test_standalone_candles_app():
+    from api.candles import app as cand_app
+    c = TestClient(cand_app)
+    resp1 = c.get("/?mode=replay&interval=15m&limit=10")
+    assert resp1.status_code == 200
+    assert resp1.json()["status"] == "SUCCESS"
