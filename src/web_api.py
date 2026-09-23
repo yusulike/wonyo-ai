@@ -35,12 +35,28 @@ model = WonyoAIModel(risk_engine=risk_engine, confidence_threshold=0.55)
 extractor = WonyoFeatureExtractor()
 
 def fetch_live_binance_candles(interval: str = "15m", limit: int = 150) -> pd.DataFrame:
-    """Fetch live candles from Binance public API."""
-    url = f"https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval={interval}&limit={limit}"
-    resp = requests.get(url, timeout=5)
-    if resp.status_code != 200:
-        raise RuntimeError(f"Binance API error: {resp.status_code}")
-    data = resp.json()
+    """Fetch live candles from Binance public API, with automatic Binance.US fallback for US servers (Vercel)."""
+    endpoints = [
+        f"https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval={interval}&limit={limit}",
+        f"https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval={interval}&limit={limit}",
+    ]
+    data = None
+    last_err = None
+    for url in endpoints:
+        try:
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                if isinstance(data, list) and len(data) > 0:
+                    break
+            else:
+                last_err = f"API error: {resp.status_code}"
+        except Exception as e:
+            last_err = str(e)
+            
+    if not data or not isinstance(data, list):
+        raise RuntimeError(f"All exchange endpoints failed: {last_err}")
+
     
     rows = []
     for item in data:
