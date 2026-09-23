@@ -375,6 +375,16 @@ static_dir = Path(__file__).resolve().parent / "static"
 static_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
+# Serve assets directory if needed
+assets_candidates = [
+    Path(__file__).resolve().parent / "static" / "assets",
+    Path(__file__).resolve().parent.parent / "public" / "assets"
+]
+for ad in assets_candidates:
+    if ad.exists():
+        app.mount("/assets", StaticFiles(directory=str(ad)), name="assets")
+        break
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("src.web_api:app", host="127.0.0.1", port=8000, reload=True)

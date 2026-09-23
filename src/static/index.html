@@ -91,24 +91,51 @@
     </header>
 
     <!-- WONYO 2-PANEL MASTER EXECUTIVE BOARD (상단 2대 마스터 패널) -->
-    <section class="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <section class="mt-3 grid grid-cols-1 lg:grid-cols-12 gap-3">
         
-        <!-- 패널 1: 지금 워뇨띠라면? (매수 / 매도 / 중립 3자 판정 패널) (6 Cols) -->
-        <div id="panel-wonyo-decision" class="lg:col-span-6 p-4 rounded-2xl hud-card border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/20 via-black to-blue-950/20 shadow-xl flex flex-col justify-between">
+        <!-- 패널 1: 지금 워뇨띠라면? (마스코트 직감 & 매수/매도/관망) (6 Cols) -->
+        <div id="panel-wonyo-decision" class="lg:col-span-6 p-3 sm:p-3.5 rounded-2xl hud-card border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/20 via-black to-blue-950/20 shadow-xl flex flex-col justify-between">
             <div>
                 <!-- Header -->
                 <div class="flex items-center justify-between pb-2 border-b border-gray-800/80">
                     <div class="flex items-center space-x-2">
                         <span class="text-base">👑</span>
-                        <span class="text-xs font-black text-white uppercase tracking-wider">지금 워뇨띠라면? (실전 행동 결정)</span>
+                        <span class="text-xs font-black text-white uppercase tracking-wider">지금 워뇨띠라면? (실시간 직감 판단)</span>
                     </div>
                     <span id="wonyo-expected-winrate" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">기대 승률 74.5%</span>
                 </div>
 
-                <!-- 3-Button State Switcher (매수 / 매도 / 중립) -->
-                <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+                <!-- Wonyo Mascot & Live Speech Bubble Hero -->
+                <div class="mt-2.5 p-2.5 rounded-2xl bg-black/60 border border-gray-800/90 flex items-center gap-3 relative overflow-hidden">
+                    <!-- Mascot Avatar with glowing aura -->
+                    <div class="relative shrink-0">
+                        <div id="mascot-aura" class="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-600 opacity-40 blur-sm transition-all duration-500"></div>
+                        <img id="wonyo-mascot-img" src="/assets/mascot/hold.jpg" alt="Wonyo Mascot" 
+                             class="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-amber-500/60 shadow-md shadow-amber-500/20 transition-all duration-300" />
+                        <span id="mascot-badge" class="absolute -bottom-1 -right-1 text-[9px] font-black px-1.5 py-0.2 rounded-md bg-gray-900 border border-amber-500 text-amber-400">
+                            😴 꿀잠
+                        </span>
+                    </div>
+
+                    <!-- Speech Bubble -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-2 flex-wrap gap-y-0.5">
+                            <span id="decision-icon" class="text-sm">💡</span>
+                            <span id="decision-headline" class="text-xs sm:text-sm font-black text-white truncate">관망 및 현금 대기</span>
+                            <span id="decision-action-tag" class="text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-gray-800 text-gray-300 border border-gray-700">HOLD</span>
+                        </div>
+                        <div class="mt-1 p-1.5 rounded-xl bg-gray-900/80 border border-gray-800/80 text-[11px] text-gray-300 leading-relaxed font-medium">
+                            <p id="decision-detail" class="line-clamp-2">
+                                "거래량 안 터질 땐 무리하게 진입 안 하고 현금 들고 꿀잠 자는 게 돈 버는 거임."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3-Button State Switcher (매수 / 매도 / 관망) -->
+                <div class="grid grid-cols-3 gap-2 mt-2.5 text-center">
                     <!-- 매수 BUY Button/Badge -->
-                    <div id="state-buy-btn" class="p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
+                    <div id="state-buy-btn" class="p-2 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
                         <div class="text-xs font-black text-gray-400 flex items-center space-x-1">
                             <span>▲</span><span>매수 (BUY)</span>
                         </div>
@@ -116,7 +143,7 @@
                     </div>
 
                     <!-- 매도 SELL Button/Badge -->
-                    <div id="state-sell-btn" class="p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
+                    <div id="state-sell-btn" class="p-2 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
                         <div class="text-xs font-black text-gray-400 flex items-center space-x-1">
                             <span>▼</span><span>매도 (SELL)</span>
                         </div>
@@ -124,99 +151,85 @@
                     </div>
 
                     <!-- 중립 NEUTRAL Button/Badge -->
-                    <div id="state-hold-btn" class="p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
+                    <div id="state-hold-btn" class="p-2 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
                         <div class="text-xs font-black text-gray-400 flex items-center space-x-1">
                             <span>━</span><span>관망 (HOLD)</span>
                         </div>
                         <span class="text-[10px] text-gray-500 mt-0.5">거래량 대기</span>
                     </div>
                 </div>
-
-                <!-- Decisive Action Directive & Reason -->
-                <div class="mt-3 p-3 rounded-xl bg-black/50 border border-gray-800 flex items-start space-x-2.5">
-                    <span id="decision-icon" class="text-2xl mt-0.5">💡</span>
-                    <div>
-                        <div class="flex items-center space-x-2">
-                            <span id="decision-headline" class="text-sm font-black text-white">분석 중...</span>
-                            <span id="decision-action-tag" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300">HOLD</span>
-                        </div>
-                        <p id="decision-detail" class="text-xs text-gray-400 mt-1 leading-relaxed">
-                            실시간 오더플로우 및 시장 데이터를 종합 분석하고 있습니다.
-                        </p>
-                    </div>
-                </div>
             </div>
 
-            <!-- Bottom Quick Factors (거래량, 외부, 뉴스) -->
-            <div class="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-gray-800/60 text-xs">
+            <!-- Bottom Quick Factors (거래량, 시장 흐름, 심리/뉴스) -->
+            <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-gray-800/60 text-xs">
                 <div class="truncate text-[11px]"><span class="text-gray-500">거래량:</span> <strong id="sb-vol-status" class="text-emerald-400">소강</strong></div>
-                <div class="truncate text-[11px]"><span class="text-gray-500">외부추세:</span> <strong id="sb-ext-status" class="text-gray-300">박스권</strong></div>
-                <div class="truncate text-[11px]"><span class="text-gray-500">심리/SNS:</span> <strong id="sb-news-status" class="text-amber-400">탐욕 71pt</strong></div>
+                <div class="truncate text-[11px]"><span class="text-gray-500">시장흐름:</span> <strong id="sb-ext-status" class="text-gray-300">박스권</strong></div>
+                <div class="truncate text-[11px]"><span class="text-gray-500">심리/뉴스:</span> <strong id="sb-news-status" class="text-amber-400">탐욕 71pt</strong></div>
             </div>
         </div>
 
-        <!-- 패널 2: 만약 들어갔다면? (가상 실전 포지션 & 투입 규모 패널) (6 Cols) -->
-        <div id="panel-active-position" class="lg:col-span-6 p-4 rounded-2xl hud-card border-2 border-blue-500/40 bg-gradient-to-br from-blue-950/20 via-black to-purple-950/20 shadow-xl flex flex-col justify-between">
+        <!-- 패널 2: 만약 들어갔다면? (가상 실전 포지션 & 투입 규모) (6 Cols) -->
+        <div id="panel-active-position" class="lg:col-span-6 p-3 sm:p-3.5 rounded-2xl hud-card border-2 border-blue-500/40 bg-gradient-to-br from-blue-950/20 via-black to-purple-950/20 shadow-xl flex flex-col justify-between">
             <div>
                 <!-- Header -->
                 <div class="flex items-center justify-between pb-2 border-b border-gray-800/80">
                     <div class="flex items-center space-x-2">
                         <span class="text-base">💼</span>
-                        <span class="text-xs font-black text-white uppercase tracking-wider">만약 들어갔다면? (실전 포지션 & 투입 규모)</span>
+                        <span class="text-xs font-black text-white uppercase tracking-wider">만약 들어갔다면? (가상 포지션 & 실시간 손익)</span>
                     </div>
                     <span id="pos-status-badge" class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">LONG 포지션</span>
                 </div>
 
-                <!-- 4 Metrics Grid (포지션 방향, 진입단가, 투입규모/계약, 실시간 손익) -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
+                <!-- 4 Metrics Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2.5">
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
                         <div class="text-[10px] text-gray-500 font-bold uppercase">포지션 방향</div>
-                        <div id="pos-side-text" class="text-sm font-black text-emerald-400 mt-0.5 flex items-center space-x-1">
+                        <div id="pos-side-text" class="text-xs sm:text-sm font-black text-emerald-400 mt-0.5 flex items-center space-x-1">
                             <span>▲ LONG</span>
                         </div>
                         <div id="pos-leverage-text" class="text-[10px] text-gray-400 font-mono">레버리지 1.85x</div>
                     </div>
 
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
                         <div class="text-[10px] text-gray-500 font-bold uppercase">진입 체결가</div>
-                        <div id="pos-entry-price" class="text-sm font-black mono text-white mt-0.5">$---,---</div>
+                        <div id="pos-entry-price" class="text-xs sm:text-sm font-black mono text-white mt-0.5">$---,---</div>
                         <div class="text-[10px] text-gray-500">지정가 Touch</div>
                     </div>
 
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-[10px] text-gray-500 font-bold uppercase">투입 규모 (Size)</div>
-                        <div id="pos-size-contracts" class="text-sm font-black mono text-cyan-400 mt-0.5">--- 계약</div>
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-500 font-bold uppercase">투입 규모</div>
+                        <div id="pos-size-contracts" class="text-xs sm:text-sm font-black mono text-cyan-400 mt-0.5">--- 계약</div>
                         <div id="pos-size-usd" class="text-[10px] text-gray-400 mono">($---,---)</div>
                     </div>
 
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-[10px] text-gray-500 font-bold uppercase">실시간 PnL</div>
-                        <div id="pos-live-pnl" class="text-sm font-black mono text-emerald-400 mt-0.5">+0.00%</div>
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-500 font-bold uppercase">실시간 손익 (PnL)</div>
+                        <div id="pos-live-pnl" class="text-xs sm:text-sm font-black mono text-emerald-400 mt-0.5">+0.00%</div>
                         <div id="pos-pnl-usd" class="text-[10px] text-gray-400 mono">(+$0.00)</div>
                     </div>
                 </div>
 
                 <!-- Execution Rules & Holding Timer -->
-                <div class="mt-3 p-3 rounded-xl bg-black/50 border border-gray-800 flex items-center justify-between text-xs">
+                <div class="mt-2.5 p-2.5 rounded-xl bg-black/50 border border-gray-800 flex items-center justify-between text-xs">
                     <div>
-                        <div class="text-[10px] text-gray-400 font-bold uppercase">손익 탈출 가이드라인 (16분 초단타 원칙)</div>
-                        <div class="flex items-center space-x-3 mt-1 mono text-[11px]">
-                            <span>🛑 손절: <strong id="pos-sl-price" class="text-rose-400 font-bold">$---</strong> (-1.45 ATR)</span>
+                        <div class="text-[10px] text-gray-400 font-bold uppercase">손익 탈출 가이드 (16분 초단타 원칙)</div>
+                        <div class="flex items-center space-x-2.5 mt-0.5 mono text-[11px]">
+                            <span>🛑 칼손절: <strong id="pos-sl-price" class="text-rose-400 font-bold">$---</strong></span>
                             <span>•</span>
-                            <span>🎯 1차 익절: <strong id="pos-tp-price" class="text-emerald-400 font-bold">$---</strong> (+1.20 ATR)</span>
+                            <span>🎯 1차 익절: <strong id="pos-tp-price" class="text-emerald-400 font-bold">$---</strong></span>
                         </div>
                     </div>
                     <div class="text-right shrink-0">
-                        <div class="text-[10px] text-gray-400 font-bold">권장 보유 타이머</div>
+                        <div class="text-[10px] text-gray-400 font-bold">권장 보유 시간</div>
                         <div id="pos-holding-timer" class="text-xs font-black mono text-amber-400 mt-0.5">16.35분 익절 타깃</div>
                     </div>
                 </div>
             </div>
 
             <!-- Bottom Scratch Rule Note -->
-            <div class="mt-3 pt-2.5 border-t border-gray-800/60 flex items-center justify-between text-[11px] text-gray-400">
-                <span>⚡ <strong>워뇨띠 스크래치 룰:</strong> 60분 내 미반등 시 본절(-0.4% 내) 조기 전량 탈출</span>
-                <span id="pos-rule-tag" class="text-emerald-400 font-mono font-bold">MAKER 66.9%</span>
+            <div class="mt-2 pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px] text-gray-400">
+                <span>⚡ <strong>조기 탈출 룰:</strong> 60분 내 미반등 시 본전/약손실(-0.4%)에 전량 탈출</span>
+                <span id="pos-rule-tag" class="text-emerald-400 font-mono font-bold">지정가 수수료 환급 66.9%</span>
             </div>
         </div>
 
@@ -233,94 +246,93 @@
     </section>
 
     <!-- Main Grid -->
-    <main class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 flex-1">
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3 flex-1">
         
         <!-- Left: Interactive Candlestick + Volume Chart (7 Cols) -->
-        <section class="lg:col-span-7 flex flex-col space-y-3">
-            <div class="hud-card rounded-2xl p-4 flex-1 flex flex-col relative min-h-[520px]">
-                <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+        <section class="lg:col-span-7 flex flex-col space-y-2.5">
+            <div class="hud-card rounded-2xl p-3 sm:p-3.5 flex-1 flex flex-col relative min-h-[380px]">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-800">
                     <div class="flex items-center space-x-2">
-                        <span class="text-sm font-bold text-gray-200">비트코인 캔들 & 거래량 오더플로우</span>
-                        <span id="chart-timeframe-tag" class="text-xs px-2 py-0.5 rounded bg-gray-800 text-emerald-400 mono font-bold">15M</span>
+                        <span class="text-xs sm:text-sm font-bold text-gray-200">BTC 캔들 & 거래량 오더플로우</span>
+                        <span id="chart-timeframe-tag" class="text-[11px] px-2 py-0.5 rounded bg-gray-800 text-emerald-400 mono font-bold">15M</span>
                     </div>
-                    <div class="flex items-center space-x-4 text-xs font-medium">
-                        <div class="flex items-center space-x-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
-                            <span class="text-gray-300">매수 꼬리 흡수 (Bullish Soak)</span>
+                    <div class="flex items-center space-x-3 text-[11px] font-medium">
+                        <div class="flex items-center space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
+                            <span class="text-gray-300">바닥 매수 흡수</span>
                         </div>
-                        <div class="flex items-center space-x-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500"></span>
-                            <span class="text-gray-300">매도 꼬리 저항 (Bearish Soak)</span>
+                        <div class="flex items-center space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 shadow-sm shadow-rose-500"></span>
+                            <span class="text-gray-300">고점 매도 저항</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Lightweight Chart Canvas -->
-                <div id="chart-container" class="w-full flex-1 mt-2 min-h-[460px] h-[480px]"></div>
+                <!-- Lightweight Chart Canvas (Compact 350px) -->
+                <div id="chart-container" class="w-full flex-1 mt-1.5 min-h-[330px] h-[350px]"></div>
             </div>
 
-            <!-- Mini Empirical Metric Cards -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="hud-card p-3 rounded-xl">
-                    <div class="text-[10px] text-gray-400 font-bold uppercase">거래량 폭발 강도 (Z-Score)</div>
-                    <div id="metric-vol-z" class="text-lg font-black mono text-emerald-400 mt-0.5">+0.00</div>
-                    <div class="text-[10px] text-gray-500 mt-0.5">> 2.0 이상 시 변곡점 임박</div>
+            <!-- Mini Metric Cards with Easy Terms -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="text-[10px] text-gray-400 font-bold">거래량 터짐 지수</div>
+                    <div id="metric-vol-z" class="text-base sm:text-lg font-black mono text-emerald-400 mt-0.5">+0.00</div>
+                    <div class="text-[10px] text-gray-500">> 2.0 큰손 개입</div>
                 </div>
-                <div class="hud-card p-3 rounded-xl">
-                    <div class="text-[10px] text-gray-400 font-bold uppercase">평균 거래량 대비 배수</div>
-                    <div id="metric-vol-exh" class="text-lg font-black mono text-white mt-0.5">1.00x</div>
-                    <div class="text-[10px] text-gray-500 mt-0.5">최근 20봉 평균 대비 비율</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="text-[10px] text-gray-400 font-bold">평소 대비 거래량</div>
+                    <div id="metric-vol-exh" class="text-base sm:text-lg font-black mono text-white mt-0.5">1.00x</div>
+                    <div class="text-[10px] text-gray-500">20봉 평균 대비</div>
                 </div>
-                <div class="hud-card p-3 rounded-xl">
-                    <div class="text-[10px] text-gray-400 font-bold uppercase">중기 이평 추세 편향</div>
-                    <div id="metric-trend-bias" class="text-lg font-black mono text-gray-300 mt-0.5">0.00%</div>
-                    <div class="text-[10px] text-gray-500 mt-0.5">50 EMA 기준 이격도</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="text-[10px] text-gray-400 font-bold">추세선 위치 (이격도)</div>
+                    <div id="metric-trend-bias" class="text-base sm:text-lg font-black mono text-gray-300 mt-0.5">0.00%</div>
+                    <div class="text-[10px] text-gray-500">50선 기준 이격</div>
                 </div>
-                <div class="hud-card p-3 rounded-xl">
-                    <div class="text-[10px] text-gray-400 font-bold uppercase">캔들 평균 변동폭 (ATR)</div>
-                    <div id="metric-atr-pct" class="text-lg font-black mono text-amber-400 mt-0.5">1.00%</div>
-                    <div class="text-[10px] text-gray-500 mt-0.5">최근 1봉당 변동성 폭</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="text-[10px] text-gray-400 font-bold">1봉당 흔들기 폭</div>
+                    <div id="metric-atr-pct" class="text-base sm:text-lg font-black mono text-amber-400 mt-0.5">1.00%</div>
+                    <div class="text-[10px] text-gray-500">평균 변동성 크기</div>
                 </div>
             </div>
         </section>
 
         <!-- Right: Intuitive Prediction & Dual-Factor Analysis (5 Cols) -->
-        <section class="lg:col-span-5 flex flex-col space-y-4">
+        <section class="lg:col-span-5 flex flex-col space-y-2.5">
             
-            <!-- MASTER VERDICT CARD: WILL IT GO UP OR DOWN? -->
-            <div id="verdict-card" class="hud-card rounded-2xl p-6 transition-all duration-300 border-2">
+            <!-- MASTER VERDICT & COMPASS GAUGE (Compact) -->
+            <div id="verdict-card" class="hud-card rounded-2xl p-3 sm:p-3.5 transition-all duration-300 border-2">
                 <div class="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
-                    <span>AI 종합 무빙 판정 (UP vs DOWN)</span>
-                    <span id="verdict-confidence" class="mono px-2.5 py-0.5 rounded-full bg-gray-800 text-gray-200">신뢰도: --%</span>
+                    <span>무빙 나침반 & 시장 압력</span>
+                    <span id="verdict-confidence" class="mono px-2 py-0.5 rounded-full bg-gray-800 text-gray-200 text-[11px]">신뢰도: --%</span>
                 </div>
 
                 <!-- Big Visual Direction Header -->
-                <div class="mt-4 flex items-center justify-between">
+                <div class="mt-2 flex items-center justify-between">
                     <div>
-                        <div id="verdict-text" class="text-3xl sm:text-4xl font-black tracking-tight text-white">
+                        <div id="verdict-text" class="text-xl sm:text-2xl font-black tracking-tight text-white">
                             분석 중...
                         </div>
-                        <div id="verdict-subtext" class="text-xs text-gray-400 mt-1 font-medium">
-                            거래량 오더플로우 및 외부 시장 요인을 종합 연산 중입니다.
+                        <div id="verdict-subtext" class="text-[11px] text-gray-400 mt-0.5 font-medium line-clamp-1">
+                            거래량 오더플로우 및 시장 요인을 분석 중입니다.
                         </div>
                     </div>
-                    <div id="verdict-icon" class="text-5xl">⏳</div>
+                    <div id="verdict-icon" class="text-3xl sm:text-4xl">⏳</div>
                 </div>
 
                 <!-- Bull / Bear Compass Gauge Meter -->
-                <div class="mt-5 pt-4 border-t border-gray-800">
-                    <div class="flex justify-between text-xs font-bold mb-1.5">
+                <div class="mt-2.5 pt-2 border-t border-gray-800">
+                    <div class="flex justify-between text-[11px] font-bold mb-1">
                         <span class="text-rose-400 flex items-center space-x-1"><span>▼</span><span>하락 압력</span></span>
-                        <span id="meter-score-text" class="mono text-white font-extrabold text-sm">0 pt</span>
+                        <span id="meter-score-text" class="mono text-white font-extrabold text-xs">0 pt</span>
                         <span class="text-emerald-400 flex items-center space-x-1"><span>상승 압력</span><span>▲</span></span>
                     </div>
                     <!-- Two-sided Meter Bar -->
-                    <div class="h-3 w-full bg-gray-900 rounded-full overflow-hidden flex relative p-0.5 border border-gray-800">
+                    <div class="h-2 w-full bg-gray-900 rounded-full overflow-hidden flex relative border border-gray-800">
                         <div class="w-1/2 flex justify-end">
                             <div id="meter-bear-bar" class="bg-gradient-to-l from-rose-500 to-rose-700 h-full rounded-l-full transition-all duration-500" style="width: 0%"></div>
                         </div>
-                        <!-- Center Divider -->
-                        <div class="w-1 bg-white/60 h-full z-10"></div>
+                        <div class="w-0.5 bg-white/70 h-full z-10"></div>
                         <div class="w-1/2 flex justify-start">
                             <div id="meter-bull-bar" class="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full rounded-r-full transition-all duration-500" style="width: 0%"></div>
                         </div>
@@ -328,130 +340,126 @@
                 </div>
 
                 <!-- Actionable Strategy Playbook -->
-                <div class="mt-4 p-3.5 rounded-xl bg-black/40 border border-gray-800 flex items-start space-x-2.5">
-                    <span class="text-lg">💡</span>
+                <div class="mt-2.5 p-2 rounded-xl bg-black/40 border border-gray-800 flex items-start space-x-2">
+                    <span class="text-base">💡</span>
                     <div>
-                        <div class="text-[11px] font-bold text-gray-300 uppercase tracking-wide">워뇨띠 실전 매매 가이드</div>
-                        <div id="playbook-text" class="text-xs text-gray-300 mt-0.5 leading-relaxed">
+                        <div class="text-[10px] font-bold text-gray-300 uppercase tracking-wide">워뇨띠 실전 매매 팁</div>
+                        <div id="playbook-text" class="text-[11px] text-gray-300 mt-0.5 leading-relaxed line-clamp-2">
                             거래량 데이터 수신 대기 중입니다.
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- DUAL FACTORS BREAKDOWN: VOLUME vs EXTERNAL -->
-            <div class="hud-card rounded-2xl p-5 space-y-4">
-                <div class="text-xs font-extrabold uppercase tracking-wider text-gray-300 flex items-center space-x-1.5 pb-2 border-b border-gray-800">
-                    <span>핵심 2대 판단 근거 (상세 분해)</span>
+            <!-- DUAL FACTORS BREAKDOWN: 쉬운 3대 판단 근거 -->
+            <div class="hud-card rounded-2xl p-3 sm:p-3.5 space-y-2.5">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-gray-300 flex items-center space-x-1.5 pb-1.5 border-b border-gray-800">
+                    <span>실시간 3대 핵심 근거</span>
                 </div>
 
-                <!-- Factor 1: Volume Factor (워뇨띠 직감 엔진) -->
-                <div class="p-3.5 rounded-xl bg-black/30 border border-gray-800/80">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-base">📊</span>
-                            <span class="text-xs font-bold text-white">1. 거래량 요인 (Volume Intuition)</span>
+                <!-- Factor 1: Volume Factor -->
+                <div class="p-2.5 rounded-xl bg-black/30 border border-gray-800/80">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-sm">📊</span>
+                            <span class="text-xs font-bold text-white">1. 고래 물량 흡수율</span>
                         </div>
-                        <span id="vol-badge" class="text-[11px] font-extrabold px-2 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
+                        <span id="vol-badge" class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
                     </div>
-                    <p id="vol-desc" class="text-xs text-gray-400 leading-relaxed mt-1">
+                    <p id="vol-desc" class="text-[11px] text-gray-400 leading-snug line-clamp-2">
                         거래량 지표 계산 대기 중입니다.
                     </p>
-                    <!-- Absorption Progress -->
-                    <div class="grid grid-cols-2 gap-2 mt-2.5 pt-2 border-t border-gray-800/60 text-[11px]">
+                    <div class="grid grid-cols-2 gap-2 mt-2 pt-1.5 border-t border-gray-800/60 text-[10px]">
                         <div>
                             <div class="flex justify-between text-gray-400 mb-0.5">
-                                <span>매수 흡수력</span>
+                                <span>바닥 매수 흡수</span>
                                 <span id="val-bull-abs" class="mono font-bold text-emerald-400">0.00</span>
                             </div>
-                            <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                            <div class="h-1 bg-gray-800 rounded-full overflow-hidden">
                                 <div id="bar-bull-abs" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
                             </div>
                         </div>
                         <div>
                             <div class="flex justify-between text-gray-400 mb-0.5">
-                                <span>매도 흡수력</span>
+                                <span>고점 매도 저항</span>
                                 <span id="val-bear-abs" class="mono font-bold text-rose-400">0.00</span>
                             </div>
-                            <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                            <div class="h-1 bg-gray-800 rounded-full overflow-hidden">
                                 <div id="bar-bear-abs" class="h-full bg-rose-500 transition-all duration-300" style="width: 0%"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Factor 2: External Factor (외부/시장 환경) -->
-                <div class="p-3.5 rounded-xl bg-black/30 border border-gray-800/80">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-base">🌐</span>
-                            <span class="text-xs font-bold text-white">2. 외부 환경 요인 (Market Macro & Regime)</span>
+                <!-- Factor 2: External Factor -->
+                <div class="p-2.5 rounded-xl bg-black/30 border border-gray-800/80">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-sm">🌐</span>
+                            <span class="text-xs font-bold text-white">2. 시장 환경 & 변동성</span>
                         </div>
-                        <span id="ext-badge" class="text-[11px] font-extrabold px-2 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
+                        <span id="ext-badge" class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
                     </div>
-                    <p id="ext-desc" class="text-xs text-gray-400 leading-relaxed mt-1">
+                    <p id="ext-desc" class="text-[11px] text-gray-400 leading-snug line-clamp-1">
                         외부 시장 지표 계산 대기 중입니다.
                     </p>
-                    <div class="grid grid-cols-2 gap-2 mt-2.5 pt-2 border-t border-gray-800/60 text-[11px]">
+                    <div class="grid grid-cols-2 gap-2 mt-2 pt-1.5 border-t border-gray-800/60 text-[10px]">
                         <div class="flex justify-between text-gray-400">
-                            <span>변동성 위험도:</span>
+                            <span>변동 위험:</span>
                             <span id="val-regime-risk" class="mono font-bold text-white">NORMAL</span>
                         </div>
                         <div class="flex justify-between text-gray-400">
-                            <span>시장 효율비:</span>
+                            <span>추세 깔끔함:</span>
                             <span id="val-kaufman" class="mono font-bold text-white">0.00</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Factor 3: News & SNS Factor (실시간 뉴스/SNS 심리) -->
-                <div class="p-3.5 rounded-xl bg-black/30 border border-gray-800/80">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-base">📰</span>
-                            <span class="text-xs font-bold text-white">3. 뉴스 & SNS 심리 (Market Sentiment)</span>
+                <!-- Factor 3: News & SNS Factor -->
+                <div class="p-2.5 rounded-xl bg-black/30 border border-gray-800/80">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-sm">📰</span>
+                            <span class="text-xs font-bold text-white">3. 시장 심리 & 뉴스</span>
                         </div>
-                        <span id="news-badge" class="text-[11px] font-extrabold px-2 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
+                        <span id="news-badge" class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
                     </div>
-                    <p id="news-desc" class="text-xs text-gray-400 leading-relaxed mt-1">
-                        글로벌 속보 및 공포탐욕지수 분석 대기 중입니다.
-                    </p>
-                    <div class="grid grid-cols-2 gap-2 mt-2.5 pt-2 border-t border-gray-800/60 text-[11px]">
+                    <div class="grid grid-cols-2 gap-2 mt-1.5 text-[10px]">
                         <div class="flex justify-between text-gray-400">
-                            <span>공포탐욕지수:</span>
+                            <span>공포·탐욕 지수:</span>
                             <span id="val-fng" class="mono font-bold text-amber-400">-- pt</span>
                         </div>
                         <div class="flex justify-between text-gray-400">
                             <span>시장 주목도:</span>
-                            <span id="val-attention" class="mono font-bold text-white truncate max-w-[120px]">NORMAL</span>
+                            <span id="val-attention" class="mono font-bold text-white truncate max-w-[90px]">NORMAL</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ORDER PLAN CARD -->
-            <div class="hud-card rounded-2xl p-5">
-                <div class="flex items-center justify-between pb-3 border-b border-gray-800 text-xs font-bold text-gray-300">
-                    <span>워뇨띠식 권장 주문 실행 플랜</span>
-                    <span class="text-[10px] mono text-emerald-400 font-extrabold">LIMIT MAKER</span>
+            <!-- ORDER PLAN CARD (Compact) -->
+            <div class="hud-card rounded-2xl p-3">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-800 text-xs font-bold text-gray-300">
+                    <span>워뇨띠식 주문 플랜</span>
+                    <span class="text-[10px] mono text-emerald-400 font-extrabold">지정가 (수수료 환급)</span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2.5 mt-3 text-xs mono">
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-[10px] text-gray-500 font-sans">지정가 진입 목표 (TOUCH)</div>
-                        <div id="plan-entry-px" class="text-sm font-bold text-white mt-0.5">$---,---</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-xs mono">
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-500 font-sans">진입 목표가</div>
+                        <div id="plan-entry-px" class="text-xs sm:text-sm font-bold text-white mt-0.5">$---,---</div>
                     </div>
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-[10px] text-emerald-400 font-sans">예상 보유 시간 (익절 시)</div>
-                        <div id="plan-hold-time" class="text-sm font-bold text-emerald-400 mt-0.5">16.35 분</div>
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-emerald-400 font-sans">예상 보유 시간</div>
+                        <div id="plan-hold-time" class="text-xs sm:text-sm font-bold text-emerald-400 mt-0.5">16.35 분</div>
                     </div>
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-[10px] text-rose-400 font-sans">동적 칼손절가 (SL: -1.45%)</div>
-                        <div id="plan-sl-px" class="text-sm font-bold text-rose-400 mt-0.5">$---,---</div>
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-rose-400 font-sans">동적 칼손절가</div>
+                        <div id="plan-sl-px" class="text-xs sm:text-sm font-bold text-rose-400 mt-0.5">$---,---</div>
                     </div>
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-[10px] text-emerald-400 font-sans">1차 익절 목표가 (TP: +1.20%)</div>
-                        <div id="plan-tp-px" class="text-sm font-bold text-emerald-400 mt-0.5">$---,---</div>
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-emerald-400 font-sans">1차 익절가</div>
+                        <div id="plan-tp-px" class="text-xs sm:text-sm font-bold text-emerald-400 mt-0.5">$---,---</div>
                     </div>
                 </div>
             </div>
@@ -681,50 +689,78 @@
 
             if (btnBuy && btnSell && btnHold) {
                 // Reset styles
-                btnBuy.className = 'p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
-                btnSell.className = 'p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
-                btnHold.className = 'p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
+                btnBuy.className = 'p-2 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
+                btnSell.className = 'p-2 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
+                btnHold.className = 'p-2 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
                 panelDecision.classList.remove('border-emerald-500/50', 'border-rose-500/50', 'border-gray-800');
 
+                const mascotImg = document.getElementById('wonyo-mascot-img');
+                const mascotAura = document.getElementById('mascot-aura');
+                const mascotBadge = document.getElementById('mascot-badge');
+
                 if (iv.verdict_color === 'green') {
-                    btnBuy.className = 'p-2.5 rounded-xl border-2 border-emerald-400 bg-emerald-950/40 shadow-lg shadow-emerald-500/20 transition-all flex flex-col items-center scale-105';
+                    if (mascotImg) mascotImg.src = '/assets/mascot/bull.jpg';
+                    if (mascotAura) mascotAura.className = 'absolute -inset-1 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 opacity-60 blur-md transition-all duration-500';
+                    if (mascotBadge) {
+                        mascotBadge.innerHTML = '🔥 가즈아';
+                        mascotBadge.className = 'absolute -bottom-1 -right-1 text-[9px] font-black px-1.5 py-0.2 rounded-md bg-gray-900 border border-emerald-500 text-emerald-400';
+                    }
+                    if (mascotImg) mascotImg.className = 'relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-emerald-400 shadow-lg shadow-emerald-500/30 transition-all duration-300';
+
+                    btnBuy.className = 'p-2 rounded-xl border-2 border-emerald-400 bg-emerald-950/40 shadow-lg shadow-emerald-500/20 transition-all flex flex-col items-center scale-105';
                     btnBuy.querySelector('.font-black').className = 'text-xs font-black text-emerald-400 flex items-center space-x-1';
                     btnBuy.querySelector('span:last-child').className = 'text-[10px] text-emerald-300 font-bold mt-0.5';
 
                     decIcon.textContent = '🚀';
                     decHeadline.textContent = '적극 매수 (BUY / LONG)';
-                    decHeadline.className = 'text-sm font-black text-emerald-400';
+                    decHeadline.className = 'text-xs sm:text-sm font-black text-emerald-400';
                     decActionTag.textContent = '지정가 롱 진입';
-                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
-                    decDetail.textContent = iv.playbook_text || '거래량 흡수와 추세 지지 확인. 지정가 눌림목에 매수 진입합니다.';
+                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                    decDetail.textContent = iv.playbook_text || '바닥에서 던진 물량을 고래가 다 받아먹었음! 3단 분할로 조용히 롱 탑승 🚀';
                     wonyoWinrate.textContent = '워뇨띠 기대 승률 74.5%';
                     wonyoWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
                     panelDecision.classList.add('border-emerald-500/50');
                 } else if (iv.verdict_color === 'red') {
-                    btnSell.className = 'p-2.5 rounded-xl border-2 border-rose-500 bg-rose-950/40 shadow-lg shadow-rose-500/20 transition-all flex flex-col items-center scale-105';
+                    if (mascotImg) mascotImg.src = '/assets/mascot/bear.jpg';
+                    if (mascotAura) mascotAura.className = 'absolute -inset-1 rounded-2xl bg-gradient-to-tr from-rose-500 to-red-600 opacity-60 blur-md transition-all duration-500';
+                    if (mascotBadge) {
+                        mascotBadge.innerHTML = '🛡️ 방어/숏';
+                        mascotBadge.className = 'absolute -bottom-1 -right-1 text-[9px] font-black px-1.5 py-0.2 rounded-md bg-gray-900 border border-rose-500 text-rose-400';
+                    }
+                    if (mascotImg) mascotImg.className = 'relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-rose-500 shadow-lg shadow-rose-500/30 transition-all duration-300';
+
+                    btnSell.className = 'p-2 rounded-xl border-2 border-rose-500 bg-rose-950/40 shadow-lg shadow-rose-500/20 transition-all flex flex-col items-center scale-105';
                     btnSell.querySelector('.font-black').className = 'text-xs font-black text-rose-400 flex items-center space-x-1';
                     btnSell.querySelector('span:last-child').className = 'text-[10px] text-rose-300 font-bold mt-0.5';
 
                     decIcon.textContent = '🔻';
                     decHeadline.textContent = '적극 매도/숏 (SELL / SHORT)';
-                    decHeadline.className = 'text-sm font-black text-rose-400';
+                    decHeadline.className = 'text-xs sm:text-sm font-black text-rose-400';
                     decActionTag.textContent = '지정가 숏/현금화';
-                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400';
-                    decDetail.textContent = iv.playbook_text || '고점 매도벽과 하락 압력 감지. 포지션 청산 또는 숏 진입을 고려합니다.';
+                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30';
+                    decDetail.textContent = iv.playbook_text || '고점에서 대량 매도벽에 부딪힘! 반등 기대 말고 숏 노리거나 현금 챙겨라 🛡️';
                     wonyoWinrate.textContent = '하락 압력 우세 (72.0%)';
                     wonyoWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400';
                     panelDecision.classList.add('border-rose-500/50');
                 } else {
-                    btnHold.className = 'p-2.5 rounded-xl border-2 border-amber-400/80 bg-amber-950/30 shadow-lg shadow-amber-500/20 transition-all flex flex-col items-center scale-105';
+                    if (mascotImg) mascotImg.src = '/assets/mascot/hold.jpg';
+                    if (mascotAura) mascotAura.className = 'absolute -inset-1 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-600 opacity-40 blur-sm transition-all duration-500';
+                    if (mascotBadge) {
+                        mascotBadge.innerHTML = '😴 꿀잠';
+                        mascotBadge.className = 'absolute -bottom-1 -right-1 text-[9px] font-black px-1.5 py-0.2 rounded-md bg-gray-900 border border-amber-500 text-amber-400';
+                    }
+                    if (mascotImg) mascotImg.className = 'relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-amber-500/60 shadow-md shadow-amber-500/20 transition-all duration-300';
+
+                    btnHold.className = 'p-2 rounded-xl border-2 border-amber-400/80 bg-amber-950/30 shadow-lg shadow-amber-500/20 transition-all flex flex-col items-center scale-105';
                     btnHold.querySelector('.font-black').className = 'text-xs font-black text-amber-400 flex items-center space-x-1';
                     btnHold.querySelector('span:last-child').className = 'text-[10px] text-amber-300 font-bold mt-0.5';
 
                     decIcon.textContent = '⏸️';
                     decHeadline.textContent = '관망 및 현금 대기 (HOLD)';
-                    decHeadline.className = 'text-sm font-black text-gray-200';
+                    decHeadline.className = 'text-xs sm:text-sm font-black text-gray-200';
                     decActionTag.textContent = '뇌동매매 금지';
-                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300';
-                    decDetail.textContent = iv.playbook_text || '거래량이 터질 때까지 무리한 진입을 피하고 다음 변곡점을 기다립니다.';
+                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.2 rounded bg-gray-800 text-gray-300 border border-gray-700';
+                    decDetail.textContent = iv.playbook_text || '거래량 안 터질 땐 무리하게 진입 안 하고 현금 들고 꿀잠 자는 게 돈 버는 거임 ☕';
                     wonyoWinrate.textContent = '변곡점 대기 (관망)';
                     wonyoWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-400';
                     panelDecision.classList.add('border-gray-800');
