@@ -16,3 +16,4 @@ aoa_public_2021-12-31_with_letter*
 *.csv
 .pytest_cache/
 .vercel
+uv.lock

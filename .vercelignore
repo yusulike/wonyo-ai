@@ -1,7 +1,7 @@
 # Vercel Deployment Ignore List
 # Exclude raw multi-gigabyte BitMEX logs and heavy local data
-aoa_public_2021-12-31_with_letter
-aoa_public_2021-12-31_with_letter.zip
+aoa_public_2021-12-31_with_letter*
+*.zip
 *.csv
 *.parquet
 .venv
@@ -12,3 +12,7 @@ tests
 .git
 .gemini
 .agents
+
+# Exclude local build/lock files that trigger full 500MB+ installs
+uv.lock
+pyproject.toml
