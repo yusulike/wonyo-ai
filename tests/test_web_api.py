@@ -11,8 +11,8 @@ client = TestClient(app)
 def test_root_html():
     response = client.get("/")
     assert response.status_code == 200
-    assert "WONYO MASTER SCOREBOARD BANNER" in response.text
-    assert "sb-verdict" in response.text
+    assert "panel-wonyo-decision" in response.text
+    assert "panel-active-position" in response.text
     assert "sb-news-ticker" in response.text
 
 def test_predict_endpoint_live():
@@ -40,7 +40,8 @@ def test_vercel_entrypoint():
     vercel_client = TestClient(vercel_app)
     resp = vercel_client.get("/")
     assert resp.status_code == 200
-    assert "WONYO MASTER SCOREBOARD BANNER" in resp.text
+    assert "panel-wonyo-decision" in resp.text
+    assert "panel-active-position" in resp.text
 
 def test_vercel_path_fix_middleware():
     from api.index import app as vercel_app

@@ -4,8 +4,15 @@ from pathlib import Path
 root_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(root_dir))
 
-from src.web_api import app, get_candles
+from fastapi import FastAPI, Request
+from src.web_api import get_candles
 
-# Handle both root path when mounted as standalone function, and full path
-app.add_api_route("/", get_candles, methods=["GET"])
-app.add_api_route("", get_candles, methods=["GET"])
+app = FastAPI()
+
+@app.api_route("/{full_path:path}", methods=["GET"])
+def handle_candles(request: Request, full_path: str = ""):
+    params = dict(request.query_params)
+    mode = params.get("mode", "live")
+    interval = params.get("interval", "15m")
+    limit = int(params.get("limit", 100))
+    return get_candles(mode=mode, interval=interval, limit=limit)

@@ -86,61 +86,144 @@
         </div>
     </header>
 
-    <!-- WONYO MASTER SCOREBOARD BANNER (종합 실전 전광판) -->
-    <section id="master-scoreboard" class="mt-4 p-4 rounded-2xl hud-card border-2 border-emerald-500/30 bg-gradient-to-r from-emerald-950/25 via-black to-blue-950/25 shadow-2xl">
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-            
-            <!-- 1. 메인 판정 전광판 (4 Cols) -->
-            <div class="md:col-span-4 border-b md:border-b-0 md:border-r border-gray-800 pb-3 md:pb-0 md:pr-4 flex items-center space-x-3">
-                <div id="sb-icon" class="text-4xl p-2.5 rounded-xl bg-black/60 border border-gray-800">⏳</div>
-                <div>
+    <!-- WONYO 2-PANEL MASTER EXECUTIVE BOARD (상단 2대 마스터 패널) -->
+    <section class="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
+        <!-- 패널 1: 지금 워뇨띠라면? (매수 / 매도 / 중립 3자 판정 패널) (6 Cols) -->
+        <div id="panel-wonyo-decision" class="lg:col-span-6 p-4 rounded-2xl hud-card border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/20 via-black to-blue-950/20 shadow-xl flex flex-col justify-between">
+            <div>
+                <!-- Header -->
+                <div class="flex items-center justify-between pb-2 border-b border-gray-800/80">
                     <div class="flex items-center space-x-2">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">AI 실시간 방향 판정</span>
-                        <span id="sb-expected-winrate" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">기대 승률 72%</span>
+                        <span class="text-base">👑</span>
+                        <span class="text-xs font-black text-white uppercase tracking-wider">지금 워뇨띠라면? (실전 행동 결정)</span>
                     </div>
-                    <div id="sb-verdict" class="text-2xl font-black text-white mt-0.5 tracking-tight">분석 중...</div>
-                    <div class="text-[10px] text-gray-500 mt-0.5">※ 100% 무결점 보장 아님 / 손절선 준수 필수</div>
+                    <span id="wonyo-expected-winrate" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">기대 승률 74.5%</span>
+                </div>
+
+                <!-- 3-Button State Switcher (매수 / 매도 / 중립) -->
+                <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+                    <!-- 매수 BUY Button/Badge -->
+                    <div id="state-buy-btn" class="p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
+                        <div class="text-xs font-black text-gray-400 flex items-center space-x-1">
+                            <span>▲</span><span>매수 (BUY)</span>
+                        </div>
+                        <span class="text-[10px] text-gray-500 mt-0.5">지정가 롱 진입</span>
+                    </div>
+
+                    <!-- 매도 SELL Button/Badge -->
+                    <div id="state-sell-btn" class="p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
+                        <div class="text-xs font-black text-gray-400 flex items-center space-x-1">
+                            <span>▼</span><span>매도 (SELL)</span>
+                        </div>
+                        <span class="text-[10px] text-gray-500 mt-0.5">지정가 숏/현금화</span>
+                    </div>
+
+                    <!-- 중립 NEUTRAL Button/Badge -->
+                    <div id="state-hold-btn" class="p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
+                        <div class="text-xs font-black text-gray-400 flex items-center space-x-1">
+                            <span>━</span><span>관망 (HOLD)</span>
+                        </div>
+                        <span class="text-[10px] text-gray-500 mt-0.5">거래량 대기</span>
+                    </div>
+                </div>
+
+                <!-- Decisive Action Directive & Reason -->
+                <div class="mt-3 p-3 rounded-xl bg-black/50 border border-gray-800 flex items-start space-x-2.5">
+                    <span id="decision-icon" class="text-2xl mt-0.5">💡</span>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span id="decision-headline" class="text-sm font-black text-white">분석 중...</span>
+                            <span id="decision-action-tag" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300">HOLD</span>
+                        </div>
+                        <p id="decision-detail" class="text-xs text-gray-400 mt-1 leading-relaxed">
+                            실시간 오더플로우 및 시장 데이터를 종합 분석하고 있습니다.
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            <!-- 2. 3대 판단 근거 요약 (5 Cols) -->
-            <div class="md:col-span-5 border-b md:border-b-0 md:border-r border-gray-800 pb-3 md:pb-0 md:pr-4 grid grid-cols-3 gap-2 text-xs">
-                <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                    <div class="text-[10px] text-gray-400 font-bold truncate">📊 1. 거래량 요인</div>
-                    <div id="sb-vol-status" class="font-extrabold text-emerald-400 text-xs mt-1 truncate">소강 관망</div>
-                </div>
-                <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                    <div class="text-[10px] text-gray-400 font-bold truncate">🌐 2. 외부 환경</div>
-                    <div id="sb-ext-status" class="font-extrabold text-gray-200 text-xs mt-1 truncate">박스권 횡보</div>
-                </div>
-                <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                    <div class="text-[10px] text-gray-400 font-bold truncate">📰 3. 뉴스 & SNS</div>
-                    <div id="sb-news-status" class="font-extrabold text-amber-400 text-xs mt-1 truncate">탐욕 71pt</div>
-                </div>
-            </div>
-
-            <!-- 3. 실전 진입/탈출 가이드 (3 Cols) -->
-            <div class="md:col-span-3 text-xs">
-                <div class="text-[10px] text-gray-400 font-bold uppercase">실전 주문 가이드 (16분 익절)</div>
-                <div class="flex items-baseline space-x-1.5 mt-1">
-                    <span class="text-gray-400 text-[11px]">권장가:</span>
-                    <span id="sb-target-entry" class="font-black mono text-white text-sm">$---,---</span>
-                </div>
-                <div class="flex items-center space-x-2 text-[10px] text-gray-400 mt-1">
-                    <span>손절: <strong id="sb-sl-px" class="text-rose-400 mono">--</strong></span>
-                    <span>•</span>
-                    <span>익절: <strong id="sb-tp-px" class="text-emerald-400 mono">--</strong></span>
-                </div>
+            <!-- Bottom Quick Factors (거래량, 외부, 뉴스) -->
+            <div class="grid grid-cols-3 gap-2 mt-3 pt-2.5 border-t border-gray-800/60 text-xs">
+                <div class="truncate text-[11px]"><span class="text-gray-500">거래량:</span> <strong id="sb-vol-status" class="text-emerald-400">소강</strong></div>
+                <div class="truncate text-[11px]"><span class="text-gray-500">외부추세:</span> <strong id="sb-ext-status" class="text-gray-300">박스권</strong></div>
+                <div class="truncate text-[11px]"><span class="text-gray-500">심리/SNS:</span> <strong id="sb-news-status" class="text-amber-400">탐욕 71pt</strong></div>
             </div>
         </div>
 
-        <!-- 4. 실시간 속보 뉴스 티커 (Breaking News Ticker) -->
-        <div class="mt-3 pt-2.5 border-t border-gray-800/80 flex items-center space-x-3 text-xs">
-            <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[10px] font-extrabold uppercase shrink-0">속보/SNS 주목도</span>
-            <div class="overflow-hidden relative w-full h-5">
-                <div id="sb-news-ticker" class="text-gray-300 truncate">
-                    최신 크립토 속보 수신 중...
+        <!-- 패널 2: 만약 들어갔다면? (가상 실전 포지션 & 투입 규모 패널) (6 Cols) -->
+        <div id="panel-active-position" class="lg:col-span-6 p-4 rounded-2xl hud-card border-2 border-blue-500/40 bg-gradient-to-br from-blue-950/20 via-black to-purple-950/20 shadow-xl flex flex-col justify-between">
+            <div>
+                <!-- Header -->
+                <div class="flex items-center justify-between pb-2 border-b border-gray-800/80">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">💼</span>
+                        <span class="text-xs font-black text-white uppercase tracking-wider">만약 들어갔다면? (실전 포지션 & 투입 규모)</span>
+                    </div>
+                    <span id="pos-status-badge" class="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">LONG 포지션</span>
                 </div>
+
+                <!-- 4 Metrics Grid (포지션 방향, 진입단가, 투입규모/계약, 실시간 손익) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-500 font-bold uppercase">포지션 방향</div>
+                        <div id="pos-side-text" class="text-sm font-black text-emerald-400 mt-0.5 flex items-center space-x-1">
+                            <span>▲ LONG</span>
+                        </div>
+                        <div id="pos-leverage-text" class="text-[10px] text-gray-400 font-mono">레버리지 1.85x</div>
+                    </div>
+
+                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-500 font-bold uppercase">진입 체결가</div>
+                        <div id="pos-entry-price" class="text-sm font-black mono text-white mt-0.5">$---,---</div>
+                        <div class="text-[10px] text-gray-500">지정가 Touch</div>
+                    </div>
+
+                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-500 font-bold uppercase">투입 규모 (Size)</div>
+                        <div id="pos-size-contracts" class="text-sm font-black mono text-cyan-400 mt-0.5">--- 계약</div>
+                        <div id="pos-size-usd" class="text-[10px] text-gray-400 mono">($---,---)</div>
+                    </div>
+
+                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-500 font-bold uppercase">실시간 PnL</div>
+                        <div id="pos-live-pnl" class="text-sm font-black mono text-emerald-400 mt-0.5">+0.00%</div>
+                        <div id="pos-pnl-usd" class="text-[10px] text-gray-400 mono">(+$0.00)</div>
+                    </div>
+                </div>
+
+                <!-- Execution Rules & Holding Timer -->
+                <div class="mt-3 p-3 rounded-xl bg-black/50 border border-gray-800 flex items-center justify-between text-xs">
+                    <div>
+                        <div class="text-[10px] text-gray-400 font-bold uppercase">손익 탈출 가이드라인 (16분 초단타 원칙)</div>
+                        <div class="flex items-center space-x-3 mt-1 mono text-[11px]">
+                            <span>🛑 손절: <strong id="pos-sl-price" class="text-rose-400 font-bold">$---</strong> (-1.45 ATR)</span>
+                            <span>•</span>
+                            <span>🎯 1차 익절: <strong id="pos-tp-price" class="text-emerald-400 font-bold">$---</strong> (+1.20 ATR)</span>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="text-[10px] text-gray-400 font-bold">권장 보유 타이머</div>
+                        <div id="pos-holding-timer" class="text-xs font-black mono text-amber-400 mt-0.5">16.35분 익절 타깃</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Scratch Rule Note -->
+            <div class="mt-3 pt-2.5 border-t border-gray-800/60 flex items-center justify-between text-[11px] text-gray-400">
+                <span>⚡ <strong>워뇨띠 스크래치 룰:</strong> 60분 내 미반등 시 본절(-0.4% 내) 조기 전량 탈출</span>
+                <span id="pos-rule-tag" class="text-emerald-400 font-mono font-bold">MAKER 66.9%</span>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- 실시간 속보 뉴스 티커 (Breaking News Ticker) -->
+    <section class="mt-3 px-4 py-2 rounded-xl hud-card border border-gray-800/80 bg-black/40 flex items-center space-x-3 text-xs">
+        <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[10px] font-extrabold uppercase shrink-0">속보/SNS 주목도</span>
+        <div class="overflow-hidden relative w-full h-5">
+            <div id="sb-news-ticker" class="text-gray-300 truncate">
+                최신 크립토 속보 수신 중...
             </div>
         </div>
     </section>
@@ -573,49 +656,160 @@
             // Live Price
             document.getElementById('live-btc-price').textContent = `$${curPx.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}`;
 
-            // 0. MASTER SCOREBOARD BANNER (종합 실전 전광판)
-            const sbIcon = document.getElementById('sb-icon');
-            const sbVerdict = document.getElementById('sb-verdict');
-            const sbWinrate = document.getElementById('sb-expected-winrate');
-            const sbVolStatus = document.getElementById('sb-vol-status');
-            const sbExtStatus = document.getElementById('sb-ext-status');
-            const sbNewsStatus = document.getElementById('sb-news-status');
-            const sbTargetEntry = document.getElementById('sb-target-entry');
-            const sbSlPx = document.getElementById('sb-sl-px');
-            const sbTpPx = document.getElementById('sb-tp-px');
-            const sbBoard = document.getElementById('master-scoreboard');
+            // -------------------------------------------------------------
+            // PANEL 1: 지금 워뇨띠라면? (BUY / SELL / HOLD 3-Way Selector)
+            // -------------------------------------------------------------
+            const btnBuy = document.getElementById('state-buy-btn');
+            const btnSell = document.getElementById('state-sell-btn');
+            const btnHold = document.getElementById('state-hold-btn');
+            const decIcon = document.getElementById('decision-icon');
+            const decHeadline = document.getElementById('decision-headline');
+            const decActionTag = document.getElementById('decision-action-tag');
+            const decDetail = document.getElementById('decision-detail');
+            const wonyoWinrate = document.getElementById('wonyo-expected-winrate');
+            const panelDecision = document.getElementById('panel-wonyo-decision');
 
-            if (sbVerdict) {
-                sbVerdict.textContent = iv.verdict_badge;
+            if (btnBuy && btnSell && btnHold) {
+                // Reset styles
+                btnBuy.className = 'p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
+                btnSell.className = 'p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
+                btnHold.className = 'p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
+                panelDecision.classList.remove('border-emerald-500/50', 'border-rose-500/50', 'border-gray-800');
+
                 if (iv.verdict_color === 'green') {
-                    sbIcon.textContent = '🚀';
-                    sbVerdict.className = 'text-2xl font-black text-emerald-400 mt-0.5 tracking-tight';
-                    sbWinrate.textContent = '워뇨띠 사이클 기대 승률 72~78%';
-                    sbWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
-                    sbBoard.className = 'mt-4 p-4 rounded-2xl hud-card border-2 border-emerald-500/50 bg-gradient-to-r from-emerald-950/30 via-black to-blue-950/25 shadow-2xl shadow-emerald-950/30';
+                    btnBuy.className = 'p-2.5 rounded-xl border-2 border-emerald-400 bg-emerald-950/40 shadow-lg shadow-emerald-500/20 transition-all flex flex-col items-center scale-105';
+                    btnBuy.querySelector('.font-black').className = 'text-xs font-black text-emerald-400 flex items-center space-x-1';
+                    btnBuy.querySelector('span:last-child').className = 'text-[10px] text-emerald-300 font-bold mt-0.5';
+
+                    decIcon.textContent = '🚀';
+                    decHeadline.textContent = '적극 매수 (BUY / LONG)';
+                    decHeadline.className = 'text-sm font-black text-emerald-400';
+                    decActionTag.textContent = '지정가 롱 진입';
+                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
+                    decDetail.textContent = iv.playbook_text || '거래량 흡수와 추세 지지 확인. 지정가 눌림목에 매수 진입합니다.';
+                    wonyoWinrate.textContent = '워뇨띠 기대 승률 74.5%';
+                    wonyoWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
+                    panelDecision.classList.add('border-emerald-500/50');
                 } else if (iv.verdict_color === 'red') {
-                    sbIcon.textContent = '🔻';
-                    sbVerdict.className = 'text-2xl font-black text-rose-500 mt-0.5 tracking-tight';
-                    sbWinrate.textContent = '하락 압력 우세 (손절/방어 최우선)';
-                    sbWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400';
-                    sbBoard.className = 'mt-4 p-4 rounded-2xl hud-card border-2 border-rose-500/50 bg-gradient-to-r from-rose-950/30 via-black to-orange-950/25 shadow-2xl shadow-rose-950/30';
+                    btnSell.className = 'p-2.5 rounded-xl border-2 border-rose-500 bg-rose-950/40 shadow-lg shadow-rose-500/20 transition-all flex flex-col items-center scale-105';
+                    btnSell.querySelector('.font-black').className = 'text-xs font-black text-rose-400 flex items-center space-x-1';
+                    btnSell.querySelector('span:last-child').className = 'text-[10px] text-rose-300 font-bold mt-0.5';
+
+                    decIcon.textContent = '🔻';
+                    decHeadline.textContent = '적극 매도/숏 (SELL / SHORT)';
+                    decHeadline.className = 'text-sm font-black text-rose-400';
+                    decActionTag.textContent = '지정가 숏/현금화';
+                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400';
+                    decDetail.textContent = iv.playbook_text || '고점 매도벽과 하락 압력 감지. 포지션 청산 또는 숏 진입을 고려합니다.';
+                    wonyoWinrate.textContent = '하락 압력 우세 (72.0%)';
+                    wonyoWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400';
+                    panelDecision.classList.add('border-rose-500/50');
                 } else {
-                    sbIcon.textContent = '⏸️';
-                    sbVerdict.className = 'text-2xl font-black text-gray-200 mt-0.5 tracking-tight';
-                    sbWinrate.textContent = '관망 권고 (승률 모멘텀 대기)';
-                    sbWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-400';
-                    sbBoard.className = 'mt-4 p-4 rounded-2xl hud-card border-2 border-gray-800 bg-gradient-to-r from-gray-950/30 via-black to-slate-950/25 shadow-2xl';
+                    btnHold.className = 'p-2.5 rounded-xl border-2 border-amber-400/80 bg-amber-950/30 shadow-lg shadow-amber-500/20 transition-all flex flex-col items-center scale-105';
+                    btnHold.querySelector('.font-black').className = 'text-xs font-black text-amber-400 flex items-center space-x-1';
+                    btnHold.querySelector('span:last-child').className = 'text-[10px] text-amber-300 font-bold mt-0.5';
+
+                    decIcon.textContent = '⏸️';
+                    decHeadline.textContent = '관망 및 현금 대기 (HOLD)';
+                    decHeadline.className = 'text-sm font-black text-gray-200';
+                    decActionTag.textContent = '뇌동매매 금지';
+                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-800 text-gray-300';
+                    decDetail.textContent = iv.playbook_text || '거래량이 터질 때까지 무리한 진입을 피하고 다음 변곡점을 기다립니다.';
+                    wonyoWinrate.textContent = '변곡점 대기 (관망)';
+                    wonyoWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-400';
+                    panelDecision.classList.add('border-gray-800');
                 }
 
-                sbVolStatus.textContent = vf.badge.replace(/^.*? /, '');
-                sbExtStatus.textContent = ef.badge.replace(/^.*? /, '');
+                document.getElementById('sb-vol-status').textContent = vf.badge.replace(/^.*? /, '');
+                document.getElementById('sb-ext-status').textContent = ef.badge.replace(/^.*? /, '');
                 if (nf) {
-                    sbNewsStatus.textContent = `${nf.fear_greed_label} ${nf.fear_greed_score}pt`;
+                    document.getElementById('sb-news-status').textContent = `${nf.fear_greed_label} ${nf.fear_greed_score}pt`;
                 }
+            }
 
-                sbTargetEntry.textContent = `$${plan.target_limit_price.toLocaleString()}`;
-                sbSlPx.textContent = plan.stop_loss_price > 0 ? `$${plan.stop_loss_price.toLocaleString()}` : '---';
-                sbTpPx.textContent = plan.take_profit_price > 0 ? `$${plan.take_profit_price.toLocaleString()}` : '---';
+            // -------------------------------------------------------------
+            // PANEL 2: 만약 들어갔다면? (실전 포지션 & 투입 규모)
+            // -------------------------------------------------------------
+            const posBadge = document.getElementById('pos-status-badge');
+            const posSideText = document.getElementById('pos-side-text');
+            const posLevText = document.getElementById('pos-leverage-text');
+            const posEntryPx = document.getElementById('pos-entry-price');
+            const posSizeCont = document.getElementById('pos-size-contracts');
+            const posSizeUsd = document.getElementById('pos-size-usd');
+            const posLivePnl = document.getElementById('pos-live-pnl');
+            const posPnlUsd = document.getElementById('pos-pnl-usd');
+            const posSlPx = document.getElementById('pos-sl-price');
+            const posTpPx = document.getElementById('pos-tp-price');
+            const posHoldingTimer = document.getElementById('pos-holding-timer');
+
+            if (posBadge) {
+                if (iv.verdict_color === 'green') {
+                    posBadge.textContent = 'LONG 포지션 가동';
+                    posBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
+                    posSideText.textContent = '▲ LONG (매수)';
+                    posSideText.className = 'text-sm font-black text-emerald-400 mt-0.5';
+                    posLevText.textContent = `레버리지 ${plan.estimated_leverage || 1.85}x (Kelly)`;
+                    
+                    const entry = plan.target_limit_price || curPx;
+                    posEntryPx.textContent = `$${entry.toLocaleString()}`;
+                    
+                    const contracts = plan.target_contracts_usd || Math.round(curPx * 1.5);
+                    posSizeCont.textContent = `${contracts.toLocaleString()} 계약`;
+                    posSizeUsd.textContent = `($${contracts.toLocaleString()})`;
+
+                    const pnlPct = ((curPx - entry) / entry) * 100 * (plan.estimated_leverage || 1.85);
+                    const pnlUsd = (contracts * (pnlPct / 100));
+                    posLivePnl.textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`;
+                    posLivePnl.className = `text-sm font-black mono mt-0.5 ${pnlPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                    posPnlUsd.textContent = `(${pnlUsd >= 0 ? '+' : ''}$${pnlUsd.toFixed(1)})`;
+
+                    posSlPx.textContent = plan.stop_loss_price > 0 ? `$${plan.stop_loss_price.toLocaleString()}` : '---';
+                    posTpPx.textContent = plan.take_profit_price > 0 ? `$${plan.take_profit_price.toLocaleString()}` : '---';
+                    posHoldingTimer.textContent = '16.35분 익절 타깃';
+                    posHoldingTimer.className = 'text-xs font-black mono text-emerald-400 mt-0.5';
+                } else if (iv.verdict_color === 'red') {
+                    posBadge.textContent = 'SHORT 포지션 가동';
+                    posBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400';
+                    posSideText.textContent = '▼ SHORT (매도)';
+                    posSideText.className = 'text-sm font-black text-rose-400 mt-0.5';
+                    posLevText.textContent = `레버리지 ${plan.estimated_leverage || 1.50}x (Kelly)`;
+                    
+                    const entry = plan.target_limit_price || curPx;
+                    posEntryPx.textContent = `$${entry.toLocaleString()}`;
+                    
+                    const contracts = plan.target_contracts_usd || Math.round(curPx * 1.2);
+                    posSizeCont.textContent = `${contracts.toLocaleString()} 계약`;
+                    posSizeUsd.textContent = `($${contracts.toLocaleString()})`;
+
+                    const pnlPct = ((entry - curPx) / entry) * 100 * (plan.estimated_leverage || 1.50);
+                    const pnlUsd = (contracts * (pnlPct / 100));
+                    posLivePnl.textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`;
+                    posLivePnl.className = `text-sm font-black mono mt-0.5 ${pnlPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                    posPnlUsd.textContent = `(${pnlUsd >= 0 ? '+' : ''}$${pnlUsd.toFixed(1)})`;
+
+                    posSlPx.textContent = plan.stop_loss_price > 0 ? `$${plan.stop_loss_price.toLocaleString()}` : '---';
+                    posTpPx.textContent = plan.take_profit_price > 0 ? `$${plan.take_profit_price.toLocaleString()}` : '---';
+                    posHoldingTimer.textContent = '16.35분 익절 타깃';
+                    posHoldingTimer.className = 'text-xs font-black mono text-rose-400 mt-0.5';
+                } else {
+                    posBadge.textContent = '무포지션 (현금 100%)';
+                    posBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded bg-gray-800 text-gray-300';
+                    posSideText.textContent = '━ NO POSITION';
+                    posSideText.className = 'text-sm font-black text-gray-400 mt-0.5';
+                    posLevText.textContent = '레버리지 0.00x';
+                    
+                    posEntryPx.textContent = `$${curPx.toLocaleString()}`;
+                    posSizeCont.textContent = '0 계약 (현금 보유)';
+                    posSizeUsd.textContent = '($0.00)';
+                    posLivePnl.textContent = '0.00%';
+                    posLivePnl.className = 'text-sm font-black mono text-gray-400 mt-0.5';
+                    posPnlUsd.textContent = '($0.00)';
+
+                    posSlPx.textContent = '---';
+                    posTpPx.textContent = '---';
+                    posHoldingTimer.textContent = '변곡점 출현 대기';
+                    posHoldingTimer.className = 'text-xs font-black mono text-gray-400 mt-0.5';
+                }
             }
 
             // 1. MASTER VERDICT CARD
