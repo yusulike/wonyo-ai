@@ -41,3 +41,13 @@ def test_vercel_entrypoint():
     resp = vercel_client.get("/")
     assert resp.status_code == 200
     assert "WONYO MASTER SCOREBOARD BANNER" in resp.text
+
+def test_vercel_path_fix_middleware():
+    from api.index import app as vercel_app
+    vercel_client = TestClient(vercel_app)
+    # Simulate Vercel rewrite where client requested /api/predict but Vercel routes to /api/index.py with header
+    resp = vercel_client.get("/api/index.py?mode=live&interval=15m", headers={"x-matched-path": "/api/predict?mode=live&interval=15m"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "SUCCESS"
+    assert "intuitive_verdict" in data
