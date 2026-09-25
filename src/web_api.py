@@ -21,6 +21,7 @@ from src.risk_engine import WonyoRiskEngine, PortfolioState
 from src.wonyo_model import WonyoAIModel, ActionType
 from src.feature_extractor import WonyoFeatureExtractor
 from src.news_sentiment import news_engine
+from src.onnx_predictor import WonyoONNXPredictor
 
 app = FastAPI(title="Wonyo-AI Institutional Terminal", version="1.0.0", redirect_slashes=False)
 
@@ -33,6 +34,7 @@ risk_engine = WonyoRiskEngine(
 )
 model = WonyoAIModel(risk_engine=risk_engine, confidence_threshold=0.55)
 extractor = WonyoFeatureExtractor()
+onnx_predictor = WonyoONNXPredictor()
 
 def fetch_live_binance_candles(interval: str = "15m", limit: int = 150) -> pd.DataFrame:
     """Fetch live candles from Binance public API, with automatic Binance.US fallback for US servers (Vercel)."""
@@ -98,6 +100,10 @@ def get_prediction(
             df_raw = load_replay_candles(limit=120)
 
         df = extractor.compute_features(df_raw)
+        
+        # Real-time ONNX Neural Network Inference (WonyoImitationNet trained on 600MB BitMEX executions)
+        onnx_prediction = onnx_predictor.predict(df)
+        
         latest = df.iloc[-1].to_dict()
         cur_px = float(latest["close"])
 
@@ -373,8 +379,25 @@ def get_prediction(
                 "reason": decision.get("reason", "NOMINAL_MONITORING")
             },
             "wonyo_intuition": intuition_metrics,
-            "risk_matrix": risk_matrix
+            "risk_matrix": risk_matrix,
+            "nn_prediction": onnx_prediction
         }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "ERROR", "message": str(e)})
+
+@app.get("/api/nn-prediction")
+@app.get("/api/nn-prediction/")
+def get_nn_prediction(
+    mode: str = Query("live", pattern="^(live|replay)$"),
+    interval: str = Query("15m", pattern="^(5m|15m|1h)$")
+):
+    try:
+        if mode == "live":
+            df_raw = fetch_live_binance_candles(interval=interval, limit=60)
+        else:
+            df_raw = load_replay_candles(limit=60)
+        df = extractor.compute_features(df_raw)
+        return onnx_predictor.predict(df)
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "ERROR", "message": str(e)})
 

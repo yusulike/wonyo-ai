@@ -1,8 +1,9 @@
 # ⚡ 워뇨-AI (Wonyo-AI)
 
-> **비트코인 전설의 트레이더 '워뇨띠(Wonyo)' 실거래 복기 & 오더플로우 거래량 흡수(Volume Absorption) 기반 실시간 직감 예측 엔진**
+> **비트코인 전설의 트레이더 '워뇨띠' 144만 건 실거래 전수 복기 & 거래량 흡수(Volume Absorption) + 딥러닝(ONNX) 융합 실시간 직감 예측 터미널**
 
 [![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Demo-emerald?style=for-the-badge&logo=vercel)](https://wonyo-ai.vercel.app)
+[![ONNX Runtime](https://img.shields.io/badge/ONNX%20Runtime-0.36ms%20Latency-005ced?style=for-the-badge&logo=onnx)](https://onnxruntime.ai/)
 [![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
 [![uv](https://img.shields.io/badge/uv-Fast%20Packaging-purple?style=for-the-badge)](https://github.com/astral-sh/uv)
@@ -12,48 +13,93 @@
 
 ## 📌 프로젝트 소개 (Overview)
 
-**워뇨-AI**는 비트코인 선물 시장에서 14.5 BTC(수백만 원)로 출발하여 **+3,537.3 BTC(3,000억 원 이상)**의 누적 수익을 기록한 전설적인 트레이더 '워뇨띠'의 체결 로그 600MB 전수 분석 데이터와 매매 행동 패턴을 모델링한 **실시간 퀀트 인텔리전스 터미널**입니다.
+**워뇨-AI**는 비트코인 선물 시장에서 14.5 BTC(수백만 원)로 출발하여 **+3,537.3 BTC(3,000억 원 이상)**의 누적 실현 수익을 기록한 전설적인 트레이더 '워뇨띠(aoa)'의 600MB 비트맥스(BitMEX) 원본 체결 데이터(1,444,583건)를 전수 분석·모델링한 **초저지연 퀀트 인텔리전스 터미널**입니다.
 
-복잡한 보조지표 대신 워뇨띠의 실제 매매 핵심 철학인 **[거래량 흡수(Volume Absorption) + 캔들 해석 + 리스크 관리 한도]**를 수식화하여, 매 10초마다 실시간 시장을 진단하고 명쾌한 포지션 가이드를 제공합니다.
+워뇨띠의 실거래 핵심 철학인 **[오더플로우 거래량 흡수(Volume Absorption) + 캔들 해석 + 리스크 한도 관리]** 퀀트 알고리즘과 함께, 원격 GPU로 학습된 **멀티태스크 심층 신경망(`WonyoImitationNet`)**을 C++ 최적화 **ONNX Runtime(추론 지연 0.36ms)**으로 결합하여 매 10초마다 실시간 시장을 진단하고 최적의 포지션을 가이드합니다.
 
 🔗 **라이브 웹 터미널**: [https://wonyo-ai.vercel.app](https://wonyo-ai.vercel.app)
 
 ---
 
-## 🎯 핵심 기능 (Key Features)
+## 🧠 600MB 실거래 전수학습 딥러닝 아키텍처 (ONNX)
 
-### 1. 👑 상단 마스터 이그제큐티브 패널 (0.5초 직관성)
-* **패널 1: "지금 워뇨띠라면?" (BUY / SELL / HOLD 3-Way Selector)**
-  * 오더플로우 거래량 흡수율과 외부 거시 지표를 종합하여 **매수(BUY), 매도(SELL), 관망(HOLD)**을 네온 컬러와 함께 0.5초 만에 판단.
-  * 거래량이 터지기 전 무리한 뇌동매매를 방지하는 실전 플레이북 가이드 제시.
-* **패널 2: "만약 들어갔다면?" (가상 포지션 & 손익 모니터링)**
-  * 진입 방향(LONG/SHORT), 3단 래더 분할 진입가, 계약 규모(USD), 동적 켈리 레버리지 계산.
-  * 실시간 미실현 손익(PnL) 및 목표가(익절 16.35분 기준) / 손절가 / 60분 스크래치 조기 탈출 타이머 추적.
+비트맥스 원본 체결 데이터(144만 행)에서 추출된 15분 단위 연속 시계열 텐서(`[Batch, 32, 12]`)를 바탕으로 워뇨띠의 진입·청산 의사결정과 베팅 크기를 모방 학습했습니다:
 
-### 2. 📊 초고속 TradingView 캔들 & 오더플로우 차트
-* TradingView Lightweight Charts 기반 120개 실시간 캔들 및 거래량 히스토그램 렌더링.
-* 고래의 급격한 매도 흡수(Bullish Absorption) 및 매수 흡수(Bearish Absorption) 마커 실시간 차트 오버레이.
-* 5분봉(5m), 15분봉(15m), 1시간봉(1h) 타임프레임 전환 지원.
+```
+[15M 캔들 & 12대 퀀트 피처 (32-Bar Sequence)]
+                     │
+                     ▼
+  ┌─────────────────────────────────────┐
+  │  1D Dilated Conv1D Feature Extractor│ (국소 캔들/거래량 패턴 추출)
+  └──────────────────┬──────────────────┘
+                     ▼
+  ┌─────────────────────────────────────┐
+  │  Bidirectional GRU Sequence Layer   │ (양방향 장단기 문맥 파악)
+  └──────────────────┬──────────────────┘
+                     ▼
+  ┌─────────────────────────────────────┐
+  │    Temporal Self-Attention Layer    │ (핵심 변곡봉 가중치 집중)
+  └──────────────────┬──────────────────┘
+                     ▼
+          ┌──────────┴──────────┐
+          ▼                     ▼
+  ┌───────────────┐     ┌───────────────┐
+  │ Action Head   │     │  Sizing Head  │
+  │ (4-Class)     │     │ (Continuous)  │
+  │ • HOLD        │     │               │
+  │ • BUY_LONG    │     │ Dynamic Kelly │
+  │ • SELL_SHORT  │     │ Sizing Factor │
+  │ • CLOSE       │     │               │
+  └───────────────┘     └───────────────┘
+```
 
-### 3. 🛡️ 워뇨띠 4대 현실적 리스크 가드 (Risk Matrix)
-1. **거래량 고갈 & 호가 흡수율 (Alpha Signal)**: 볼륨 Z-Score 및 호가창 체결 흡수 강도.
-2. **마이크로스트럭처 리스크 (Microstructure Risk)**: Amihud 비유동성 지수 및 호가 스프레드 슬리피지 방어.
-3. **시장 레짐 & 변동성 쇼크 (Regime Risk)**: 파킨슨 실현 변동성 및 카우프만 추세 효율비(ER).
-4. **포트폴리오 리스크 (Portfolio Risk)**: High Water Mark(HWM) 드로우다운 및 연속 손실 억제 켈리 사이징.
-
-### 4. 📰 시장 심리 & 외신 속보 티커
-* 얼터너티브(Alternative.me) 암호화폐 공포·탐욕 지수(Fear & Greed Index) 실시간 연동.
-* 코인텔레그래프 등 주요 외신 RSS 피드 실시간 수신 및 **호재 / 악재 / 속보** 감성 분류 (3.5초 롤링 티커).
-
-### 5. ⚡ 10초 무중단 백그라운드 자동 갱신
-* 브라우저 새로고침(F5) 없이 10초마다 백그라운드 폴링 스트리밍.
-* 헤더에 초록 펄스 램프(`LIVE`) 및 실시간 갱신 타임스탬프(`• 갱신 HH:MM:SS`) 제공.
+* **원격 GPU 학습 파이프라인**: Google Colab CLI 기반 T4 GPU 원격 프로비저닝 및 30 Epoch 클래스 가중치 학습.
+* **C++ 최적화 ONNX 배포**: 2GB가 넘는 무거운 PyTorch 런타임을 배제하고 13MB 초경량 `onnxruntime`으로 서빙하여, **평균 0.36ms(초당 약 2,700회)**의 초고속 CPU 추론 달성.
+* **4-Class 확률 분포 출력**: `HOLD`(관망), `BUY_LONG`(매수), `SELL_SHORT`(매도), `CLOSE`(조기 청산) 확률을 실시간 게이지 바로 시각화.
 
 ---
 
-## 🧠 워뇨띠 팩트 레퍼런스 (Quantitative Facts)
+## 🎯 트레이딩 핵심 집중형 UI (Streamlined Interface)
 
-비트맥스(BitMEX) 원본 체결 데이터 전수 분석을 통해 확인된 실거래 파라미터가 시스템에 반영되어 있습니다:
+불필요하고 복잡한 부가 정보와 긴 설명을 걷어내고, 실제 매매자가 0.5초 만에 판단할 수 있는 **단일 화면(Single-Screen Bloomberg/TradingView 스타일)** 레이아웃으로 간소화되었습니다.
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│  [1] 슬림 헤더: 로고 | BTC 시세 ($85,200) | 5M/15M/1H | 표준/액티브 | LIVE    │
+├──────────────────────────────────┬─────────────────────────────────────┤
+│  [2-A] 워뇨띠 직감 마스터 시그널  │  [2-B] 600MB 실거래 ONNX 신경망     │
+│   • 즉각 매수/매도/관망 3단 버튼  │   • 추론 속도: 0.36ms (C++ 엔진)     │
+│   • 롱/숏 진입 준비도 게이지 (%) │   • HOLD / BUY / SELL / CLOSE 확률  │
+│   • 핵심 플레이북 1줄 브리핑      │   • 매수흡수/매도저항/효율비 4대 칩  │
+├──────────────────────────────────┴─────────────────────────────────────┤
+│  [3] 메인 트레이딩 워크스페이스                                        │
+│  ┌───────────────────────────────┐ ┌─────────────────────────────────┐ │
+│  │ TradingView 캔들 & 오더플로우 │ │ 실전 주문 & 가상 포지션 원스톱  │ │
+│  │  • 390px 클린 차트            │ │  • 현재 포지션 / 레버리지 / PnL │ │
+│  │  • 매수흡수(초록)/매도저항(빨강)│ │  • 목표 진입가/익절가/손절가    │ │
+│  │  • 하단 4대 거래량/이격도 지표│ │  • 16분 보유 타이머/스크래치 탈출│ │
+│  │                               │ ├─────────────────────────────────┤ │
+│  │                               │ │ 최근 체결 미니 장부 (5행 콤팩트)│ │
+│  │                               │ │  • [실시간 체결] vs [전설 복기] │ │
+│  └───────────────────────────────┘ └─────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **상단 네비게이션 슬림화 (1줄)**:
+   - 비트코인 실시간 시세, 타임프레임(5m/15m/1h), 민감도(표준/액티브), 모드(LIVE/리플레이) 원스톱 제어.
+2. **마스터 시그널 & ONNX 직감 보드 통합**:
+   - 좌측: 워뇨띠 전통 오더플로우 룰 시그널 + 진입 준비도(%) 바.
+   - 우측: 144만 건 실거래로 훈련된 `WonyoImitationNet` 신경망 확률 및 0.36ms 초저지연 상태.
+3. **원스톱 포지션 & 실전 실행 패널**:
+   - 3단 래더 목표 진입가, 1차 익절가(+1.2%), 칼손절가(-1.4%), 16.35분 보유 타이머, 60분 스크래치 탈출 상태 결합.
+4. **미니 체결 장부 (5-Row Mini-Ledger)**:
+   - `[실시간 체결 장부]`와 `[2021 전설 복기]` 탭 전환 지원.
+
+---
+
+## 📊 워뇨띠 퀀트 팩트 레퍼런스 (Quantitative Facts)
+
+비트맥스(BitMEX) 원본 체결 데이터 전수 분석을 통해 확인된 실거래 파라미터가 모델 전반에 적용되어 있습니다:
 
 | 지표 | 워뇨띠 실거래 데이터 분석치 | 워뇨-AI 모델 반영 |
 | :--- | :---: | :---: |
@@ -69,11 +115,14 @@
 ## 🛠️ 기술 스택 (Tech Stack)
 
 * **언어 및 런타임**: Python 3.12, JavaScript (ES6+)
-* **패키지 & 가상환경 관리**: [`uv`](https://github.com/astral-sh/uv) (초고속 Rust 기반 패키지 매니저)
-* **백엔드 프레임워크**: FastAPI, Uvicorn, Pydantic
-* **데이터 분석 & 퀀트**: NumPy, Pandas, DuckDB (로컬 분석용)
-* **프론트엔드**: Vanilla HTML5/JS, Tailwind CSS (CDN), TradingView Lightweight Charts (v4.2.0)
-* **클라우드 & 인프라**: Vercel Serverless Functions, Edge CDN, GitHub Actions
+* **패키지 & 의존성 관리**: [`uv`](https://github.com/astral-sh/uv) (Astral 초고속 패키지 관리자)
+* **머신러닝 & 추론 가속**:
+  * **ONNX Runtime (v1.20+)**: C++ 최적화 초경량(13MB) 고속 추론 엔진
+  * **PyTorch (v2.6)**: Colab GPU 학습 모델 빌더 및 ONNX 익스포터
+  * **DuckDB / Polars**: 600MB 체결 CSV 초고속 SQL ETL 파이프라인
+* **백엔드 프레임워크**: FastAPI, Uvicorn, Pydantic, Requests
+* **프론트엔드**: Vanilla HTML5, Tailwind CSS, TradingView Lightweight Charts (v4.2.0 고정)
+* **클라우드 & 인프라**: Google Colab CLI (GPU 분산 학습), Vercel Serverless Functions, Edge CDN
 
 ---
 
@@ -81,12 +130,12 @@
 
 ### 1. 사전 요구사항
 * Python 3.12 이상
-* [uv](https://docs.astral.sh/uv/) 설치 권장:
+* [uv](https://docs.astral.sh/uv/) 설치:
   ```powershell
   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
   ```
 
-### 2. 저장소 복제 및 의존성 설치
+### 2. 저장소 복제 및 패키지 설치
 ```bash
 git clone https://github.com/yusulike/wonyo-ai.git
 cd wonyo-ai
@@ -101,44 +150,62 @@ uv run python -m uvicorn src.web_api:app --host 127.0.0.1 --port 8000 --reload
 ```
 브라우저에서 `http://127.0.0.1:8000`에 접속하여 실시간 대시보드를 확인합니다.
 
-### 4. 테스트 코드 실행
+### 4. ONNX 추론 벤치마크 및 단위 테스트
 ```bash
-uv run pytest tests/test_web_api.py -v
+# ONNX 초저지연 추론 벤치마크 실행
+uv run python src/test_onnx_inference.py
+
+# 24개 전수 단위 테스트 실행
+uv run pytest
 ```
 
 ---
 
 ## 🌐 API 엔드포인트 규격 (API Endpoints)
 
-| 메소드 | 엔드포인트 | 파라미터 | 설명 |
+| 메소드 | 엔드포인트 | 주요 파라미터 | 설명 |
 | :---: | :--- | :--- | :--- |
-| `GET` | `/` | - | 웹 인텔리전스 대시보드 UI |
-| `GET` | `/api/predict` | `mode` (`live`/`replay`), `interval` (`5m`/`15m`/`1h`) | 실시간 워뇨띠 직감 예측 및 리스크 진단 JSON |
-| `GET` | `/api/candles` | `mode`, `interval`, `limit` (기본 120) | 실시간/리플레이 캔들스틱 및 거래량 히스토그램 데이터 |
+| `GET` | `/` | - | 트레이딩 핵심 집중형 통합 웹 터미널 UI |
+| `GET` | `/api/predict` | `mode` (`live`/`replay`), `interval` (`5m`/`15m`/`1h`), `sensitivity` (`standard`/`active`) | 워뇨띠 직감 판단, 4대 리스크 매트릭스 및 ONNX 신경망 확률 통합 반환 |
+| `GET` | `/api/nn-prediction` | `mode`, `interval` | C++ 최적화 ONNX 런타임 전용 초저지연 신경망 예측 결과 반환 |
+| `GET` | `/api/candles` | `mode`, `interval`, `limit` | 실시간 캔들스틱 및 거래량 흡수(Bull/Bear Absorption) 오버레이 데이터 |
+| `GET` | `/api/trades` | - | 실시간 가상 체결 내역 및 2021년 전설의 매매 복기 장부 반환 |
 
 ---
 
 ## 📂 프로젝트 구조 (Project Structure)
 
 ```
-wonyo_ai/
-├── api/                   # Vercel 서버리스 진입점 (Serverless Functions)
-│   ├── predict.py         # /api/predict 핸들러
-│   └── candles.py         # /api/candles 핸들러
-├── public/                # Vercel 정적 호스팅 자산 (Edge CDN)
-│   └── index.html         # 프로덕션 프론트엔드 터미널
-├── src/                   # 백엔드 코어 소스코드
-│   ├── static/index.html  # 로컬 개발용 대시보드 템플릿
-│   ├── web_api.py         # FastAPI 메인 웹 애플리케이션
-│   ├── service_engine.py  # 실시간 워뇨띠 신호 및 래더 주문 생성 엔진
-│   ├── risk_gate.py       # 4대 리스크 인풋 벡터 계산 모듈
-│   └── wonyo_layer.py     # 볼륨 흡수 및 워뇨띠 매매 행동 모델
-├── tests/                 # 자동화 단위/통합 테스트
-│   └── test_web_api.py    # API 엔드포인트 및 서버리스 핸들러 테스트
-├── pyproject.toml         # 프로젝트 메타데이터 및 의존성 정의
-├── requirements.txt       # Vercel 배포용 경량 런타임 의존성
-├── vercel.json            # Vercel 라우팅 및 빌드 설정
-└── README.md              # 프로젝트 안내 문서
+wonyo-ai/
+├── api/                        # Vercel 서버리스 배포 진입점 (Serverless Functions)
+│   ├── predict.py              # /api/predict 라우트 핸들러
+│   ├── candles.py              # /api/candles 라우트 핸들러
+│   ├── trades.py               # /api/trades 라우트 핸들러
+│   └── index.py                # ASGI 프록시 및 메인 라우터
+├── public/                     # Edge CDN 정적 호스팅 자산
+│   └── index.html              # 프론트엔드 터미널 (Streamlined single-screen)
+├── src/                        # 백엔드 코어 소스코드 & 인공지능 모델
+│   ├── static/
+│   │   └── index.html          # 로컬 대시보드 템플릿
+│   ├── build_real_dataset.py   # 144만 건 체결 로그 DuckDB ETL 파이프라인
+│   ├── train_colab_nn.py       # Google Colab GPU 원격 모델 학습 스크립트
+│   ├── export_onnx.py          # PyTorch -> ONNX (Opset 17) 변환기
+│   ├── onnx_predictor.py       # 초경량 ONNX Runtime C++ 추론 엔진
+│   ├── wonyo_nn_model.onnx     # 프로덕션 서빙용 ONNX 신경망 모델
+│   ├── service_engine.py       # 3단 래더 및 리스크 가드 서비스 엔진
+│   ├── risk_engine.py          # 4대 리스크 인풋 벡터 및 켈리 사이징 계산기
+│   ├── feature_extractor.py    # 12대 퀀트 및 오더플로우 지표 추출기
+│   ├── web_api.py              # FastAPI 메인 웹 애플리케이션
+│   └── test_onnx_inference.py  # ONNX 추론 지연시간 벤치마크 스크립트
+├── tests/                      # 자동화 테스트 스위트
+│   ├── test_onnx.py            # ONNX 추론 정확성 및 입출력 규격 검증
+│   ├── test_risk_engine.py     # 켈리 공식 및 리스크 한도 검증
+│   └── test_web_api.py         # 웹 API 엔드포인트 및 서버리스 핸들러 테스트
+├── pyproject.toml              # 프로젝트 메타데이터 및 uv 패키지 정의
+├── requirements.txt            # Vercel 배포용 경량 런타임 의존성
+├── vercel.json                 # Vercel 라우팅 및 리라이트 설정
+├── AGENTS.md                   # AI 에이전트 운용 지침 및 실수 방지 철칙
+└── README.md                   # 프로젝트 종합 설명서
 ```
 
 ---

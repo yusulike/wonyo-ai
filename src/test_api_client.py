@@ -17,6 +17,12 @@ print("Confidence:", d.get("prediction", {}).get("confidence"))
 print("Probabilities:", d.get("prediction", {}).get("probabilities"))
 print("Intuition:", d.get("wonyo_intuition"))
 print("Risk Matrix:", d.get("risk_matrix"))
+print("NN ONNX Prediction:", d.get("nn_prediction"))
+
+print("\n=== [1-1] Testing Dedicated /api/nn-prediction ===")
+r_nn = client.get("/api/nn-prediction?mode=live")
+print("Status code:", r_nn.status_code)
+print("Dedicated NN Response:", r_nn.json())
 
 print("\n=== [2] Testing /api/candles ===")
 r_candles = client.get("/api/candles?mode=live&limit=10")

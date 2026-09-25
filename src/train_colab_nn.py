@@ -1,112 +1,63 @@
 """
-Wonyo-AI Behavioral Cloning Neural Network Trainer for Google Colab
-Target Hardware: Google Colab Remote GPU (T4 / L4 / A100) via Colab CLI
-Run via:
-    colab run --gpu T4 src/train_colab_nn.py
-Or interactive session:
-    colab new -s wonyo --gpu T4
-    colab install -s wonyo duckdb polars torch
-    colab exec -s wonyo -f src/train_colab_nn.py
-    colab download -s wonyo wonyo_nn_model.pt
-    colab stop -s wonyo
+Wonyo-AI: Real-Trade Neural Network Trainer & ONNX Exporter for Google Colab
+Trains Multi-Task WonyoImitationNet on Authentic 2018-2021 BitMEX Trades
+and Exports to Production-Ready ONNX Format for Real-time Web Dashboard Serving.
 """
 
 import os
 import sys
-import glob
 import time
 import math
 import numpy as np
 
-# Ensure necessary libraries are installed when running remotely on Colab VM
+# Ensure necessary libraries are installed
 try:
-    import duckdb
-    import polars as pl
     import torch
     import torch.nn as nn
     import torch.optim as optim
     from torch.utils.data import Dataset, DataLoader
+    import onnx
 except ImportError:
-    print("[Colab Setup] Installing duckdb, polars...")
+    print("[Colab Setup] Installing onnx, torch...")
     import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "duckdb", "polars"])
-    import duckdb
-    import polars as pl
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "onnx", "torch"])
     import torch
     import torch.nn as nn
     import torch.optim as optim
     from torch.utils.data import Dataset, DataLoader
+    import onnx
 
-# Detect Compute Device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"=== [Wonyo-AI NN Training on Colab] ===")
+print(f"=== [Wonyo-AI Full Real-Trade Training on Colab] ===")
 print(f"Device: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})")
 
 
 # -------------------------------------------------------------
-# 1. Data Loader & Feature Engineering
+# 1. Dataset Loader
 # -------------------------------------------------------------
-def load_and_preprocess_wonyo_trades(data_dir: str = "aoa_public_2021-12-31_with_letter"):
-    print(f"\n[1/4] Scanning trade files in: {data_dir}...")
-    files = sorted(glob.glob(f"{data_dir}/aoa-execution-*.csv"))
-    if not files:
-        # Fallback to current directory or uploaded files
-        files = sorted(glob.glob("aoa-execution-*.csv"))
-    
-    if not files:
-        print(f"[Warning] No execution CSVs found in {data_dir}. Generating synthetic demonstration data for verification...")
-        return generate_synthetic_wonyo_dataset()
+class WonyoRealDataset(Dataset):
+    def __init__(self, npz_path: str = "wonyo_dataset_real.npz"):
+        if not os.path.exists(npz_path):
+            # Check src/ or parent dir
+            if os.path.exists(os.path.join("src", npz_path)):
+                npz_path = os.path.join("src", npz_path)
+            elif os.path.exists(os.path.join("/content", npz_path)):
+                npz_path = os.path.join("/content", npz_path)
 
-    print(f"Found {len(files)} execution CSV files:")
-    for f in files:
-        print(f"  - {f}")
+        if os.path.exists(npz_path):
+            print(f"Loading authentic Wonyotti trade dataset: {npz_path}")
+            data = np.load(npz_path)
+            self.X = torch.tensor(data['X'], dtype=torch.float32)
+            self.y_action = torch.tensor(data['y_action'], dtype=torch.long)
+            self.y_size = torch.tensor(data['y_size'], dtype=torch.float32).unsqueeze(1)
+        else:
+            print(f"[Warning] {npz_path} not found. Using fallback demo dataset...")
+            n_samples = 5000
+            self.X = torch.randn(n_samples, 32, 12, dtype=torch.float32)
+            self.y_action = torch.randint(0, 4, (n_samples,), dtype=torch.long)
+            self.y_size = torch.rand(n_samples, 1, dtype=torch.float32) * 2.0
 
-    con = duckdb.connect()
-    print("Aggregating XBTUSD executions ordered chronologically...")
-    trades_df = con.sql(f"""
-        SELECT 
-            CAST(transacttime AS TIMESTAMP) as ts,
-            side,
-            lastqty,
-            lastpx,
-            ordtype,
-            lastliquidityind,
-            CASE WHEN side = 'Buy' THEN lastqty ELSE -lastqty END as signed_qty
-        FROM '{data_dir}/aoa-execution-*.csv'
-        WHERE symbol = 'XBTUSD' AND exectype = 'Trade' AND transacttime IS NOT NULL
-        ORDER BY ts ASC
-    """).pl()
-    
-    print(f"Total Trade Rows: {len(trades_df):,}")
-    
-    # Calculate cumulative position and cycle states
-    trades_df = trades_df.with_columns([
-        pl.col("signed_qty").cum_sum().alias("cum_position"),
-        pl.col("lastpx").pct_change().fill_null(0.0).alias("price_return")
-    ])
-    
-    return trades_df
-
-
-def generate_synthetic_wonyo_dataset(n_samples: int = 5000, seq_len: int = 32, n_features: int = 12):
-    """Fallback generator when running test without full 600MB data uploaded."""
-    print(f"Generating synthetic behavioral dataset ({n_samples} samples)...")
-    np.random.seed(42)
-    X = np.random.randn(n_samples, seq_len, n_features).astype(np.float32)
-    # Action labels: 0=HOLD, 1=BUY_LONG, 2=SELL_SHORT, 3=CLOSE
-    y_action = np.random.choice([0, 1, 2, 3], size=n_samples, p=[0.70, 0.12, 0.12, 0.06]).astype(np.int64)
-    y_size = np.random.uniform(0.1, 3.0, size=n_samples).astype(np.float32)
-    return X, y_action, y_size
-
-
-# -------------------------------------------------------------
-# 2. PyTorch Dataset Definition
-# -------------------------------------------------------------
-class WonyoBehaviorDataset(Dataset):
-    def __init__(self, X: np.ndarray, y_action: np.ndarray, y_size: np.ndarray):
-        self.X = torch.tensor(X, dtype=torch.float32)
-        self.y_action = torch.tensor(y_action, dtype=torch.long)
-        self.y_size = torch.tensor(y_size, dtype=torch.float32).unsqueeze(1)
+        print(f"Dataset Size: {len(self.X):,} samples | Sequence Shape: {self.X.shape[1:]}")
 
     def __len__(self):
         return len(self.X)
@@ -116,13 +67,10 @@ class WonyoBehaviorDataset(Dataset):
 
 
 # -------------------------------------------------------------
-# 3. Neural Network Architecture: WonyoImitationNet
-#    - Multi-Head 1D-CNN + Bidirectional GRU + Self-Attention
-#    - Head 1: Action Classification (HOLD, LONG, SHORT, CLOSE)
-#    - Head 2: Dynamic Position Size Regression (Kelly scale)
+# 2. Neural Network Architecture: WonyoImitationNet
 # -------------------------------------------------------------
 class TemporalAttention(nn.Module):
-    def __init__(self, hidden_dim):
+    def __init__(self, hidden_dim: int):
         super().__init__()
         self.attn = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim // 2),
@@ -132,21 +80,24 @@ class TemporalAttention(nn.Module):
 
     def forward(self, x):
         # x shape: [batch, seq_len, hidden_dim]
-        weights = torch.softmax(self.attn(x), dim=1) # [batch, seq_len, 1]
-        context = torch.sum(weights * x, dim=1)      # [batch, hidden_dim]
+        scores = self.attn(x)                       # [batch, seq_len, 1]
+        weights = torch.softmax(scores, dim=1)      # [batch, seq_len, 1]
+        context = torch.sum(weights * x, dim=1)     # [batch, hidden_dim]
         return context, weights
 
 
 class WonyoImitationNet(nn.Module):
-    def __init__(self, input_dim: int = 12, hidden_dim: int = 128, num_classes: int = 4, dropout: float = 0.25):
+    def __init__(self, input_dim: int = 12, hidden_dim: int = 128, num_classes: int = 4, dropout: float = 0.20):
         super().__init__()
-        # 1. Local Pattern Feature Extraction (1D Convolutions for candle absorption & spikes)
+        # 1. 1D Convolutional Blocks for Candle Micro-Geometry & Liquidity Absorption
         self.conv1 = nn.Conv1d(in_channels=input_dim, out_channels=64, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm1d(64)
         self.conv2 = nn.Conv1d(in_channels=64, out_channels=hidden_dim, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm1d(hidden_dim)
         self.relu = nn.GELU()
         self.dropout = nn.Dropout(dropout)
         
-        # 2. Sequence Dynamics (Bi-GRU)
+        # 2. Bi-Directional GRU for Orderflow Sequence & Momentum
         self.gru = nn.GRU(
             input_size=hidden_dim,
             hidden_size=hidden_dim // 2,
@@ -156,11 +107,11 @@ class WonyoImitationNet(nn.Module):
             dropout=dropout
         )
         
-        # 3. Attention Layer (focus on key liquidity absorption moments)
+        # 3. Temporal Self-Attention
         self.attention = TemporalAttention(hidden_dim)
         
-        # 4. Multi-Task Output Heads
-        # Head A: Action Classifier (HOLD=0, LONG=1, SHORT=2, CLOSE=3)
+        # 4. Multi-Task Heads
+        # Head 1: Action Classification (0=HOLD, 1=BUY_LONG, 2=SELL_SHORT, 3=CLOSE)
         self.action_head = nn.Sequential(
             nn.Linear(hidden_dim, 64),
             nn.GELU(),
@@ -168,30 +119,29 @@ class WonyoImitationNet(nn.Module):
             nn.Linear(64, num_classes)
         )
         
-        # Head B: Sizing Regressor (Normalized Leverage / Bet size)
+        # Head 2: Dynamic Position Sizing (0.1x ~ 5.0x leverage/scale)
         self.size_head = nn.Sequential(
             nn.Linear(hidden_dim, 32),
             nn.GELU(),
             nn.Linear(32, 1),
-            nn.Softplus() # Guarantee positive sizing
+            nn.Softplus()
         )
 
     def forward(self, x):
-        # Input shape: [batch, seq_len, input_dim]
-        # Transpose for Conv1d: [batch, input_dim, seq_len]
-        x_conv = x.transpose(1, 2)
-        x_conv = self.relu(self.conv1(x_conv))
-        x_conv = self.relu(self.conv2(x_conv))
-        x_conv = self.dropout(x_conv)
+        # x: [batch, seq_len, input_dim] -> conv expects [batch, input_dim, seq_len]
+        x_in = x.transpose(1, 2)
+        c1 = self.relu(self.bn1(self.conv1(x_in)))
+        c2 = self.relu(self.bn2(self.conv2(c1)))
+        c2 = self.dropout(c2)
         
-        # Transpose back: [batch, seq_len, hidden_dim]
-        x_seq = x_conv.transpose(1, 2)
-        gru_out, _ = self.gru(x_seq)
+        # Transpose to [batch, seq_len, hidden_dim]
+        c_seq = c2.transpose(1, 2)
+        gru_out, _ = self.gru(c_seq)
         
-        # Temporal Attention Pooling
+        # Attention Pooling
         context, _ = self.attention(gru_out)
         
-        # Multi-Head Outputs
+        # Heads
         action_logits = self.action_head(context)
         size_pred = self.size_head(context)
         
@@ -199,93 +149,156 @@ class WonyoImitationNet(nn.Module):
 
 
 # -------------------------------------------------------------
-# 4. Training & Validation Loop
+# 3. Training & ONNX Export Pipeline
 # -------------------------------------------------------------
-def train_model(epochs: int = 15, batch_size: int = 64, lr: float = 1e-3):
-    X, y_action, y_size = generate_synthetic_wonyo_dataset(n_samples=10000, seq_len=32, n_features=12)
+def train_and_export_onnx(
+    npz_path: str = "wonyo_dataset_real.npz",
+    epochs: int = 25,
+    batch_size: int = 64,
+    lr: float = 1e-3,
+    onnx_out: str = "wonyo_nn_model.onnx",
+    pt_out: str = "wonyo_nn_model.pt"
+):
+    dataset = WonyoRealDataset(npz_path)
+    total_len = len(dataset)
+    split_idx = int(total_len * 0.85)
     
-    # Train / Validation Split (80 / 20)
-    split_idx = int(len(X) * 0.8)
-    train_dataset = WonyoBehaviorDataset(X[:split_idx], y_action[:split_idx], y_size[:split_idx])
-    val_dataset = WonyoBehaviorDataset(X[split_idx:], y_action[split_idx:], y_size[split_idx:])
+    # Train/Val Split (Sequential Time-Series preserving)
+    train_indices = list(range(0, split_idx))
+    val_indices = list(range(split_idx, total_len))
     
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    train_subset = torch.utils.data.Subset(dataset, train_indices)
+    val_subset = torch.utils.data.Subset(dataset, val_indices)
     
-    model = WonyoImitationNet(input_dim=12, hidden_dim=128).to(device)
+    train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_subset, batch_size=batch_size, shuffle=False)
     
-    # Loss functions: CrossEntropy with class weighting for imbalanced HOLD vs ENTRY
-    class_weights = torch.tensor([1.0, 3.5, 3.5, 2.0], device=device)
+    model = WonyoImitationNet(input_dim=12, hidden_dim=128, num_classes=4).to(device)
+    
+    # Calculate Class Weights to prevent HOLD bias
+    actions = [dataset.y_action[i].item() for i in train_indices]
+    counts = np.bincount(actions, minlength=4)
+    total_samples = len(actions)
+    weights = total_samples / (4.0 * np.maximum(counts, 1.0))
+    class_weights = torch.tensor(weights, dtype=torch.float32, device=device)
+    print("Computed Adaptive Class Weights:")
+    labels = ["HOLD", "BUY_LONG", "SELL_SHORT", "CLOSE"]
+    for i, (lbl, w) in enumerate(zip(labels, weights)):
+        print(f"  {lbl} ({i}): count={counts[i]}, weight={w:.3f}")
+        
     criterion_action = nn.CrossEntropyLoss(weight=class_weights)
     criterion_size = nn.SmoothL1Loss()
     
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     
-    print(f"\n[3/4] Starting Training ({epochs} epochs, Batch Size: {batch_size})...")
+    print(f"\n[Training] Commencing {epochs} epochs on {device}...")
     start_time = time.time()
+    
+    best_val_acc = 0.0
     
     for epoch in range(1, epochs + 1):
         model.train()
         total_loss = 0.0
-        correct_action = 0
-        total_samples = 0
+        correct_act = 0
+        samples = 0
         
-        for batch_x, batch_action, batch_size_true in train_loader:
-            batch_x = batch_x.to(device)
-            batch_action = batch_action.to(device)
-            batch_size_true = batch_size_true.to(device)
+        for bx, b_act, b_sz in train_loader:
+            bx = bx.to(device)
+            b_act = b_act.to(device)
+            b_sz = b_sz.to(device)
             
             optimizer.zero_grad()
-            pred_action, pred_size = model(batch_x)
+            p_act, p_sz = model(bx)
             
-            loss_act = criterion_action(pred_action, batch_action)
-            loss_sz = criterion_size(pred_size, batch_size_true)
-            loss = loss_act + 0.3 * loss_sz
+            loss_a = criterion_action(p_act, b_act)
+            loss_s = criterion_size(p_sz, b_sz)
+            loss = loss_a + 0.25 * loss_s
             
             loss.backward()
-            nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0)
+            nn.utils.clip_grad_norm_(model.parameters(), 2.0)
             optimizer.step()
             
-            total_loss += loss.item() * len(batch_x)
-            preds = torch.argmax(pred_action, dim=1)
-            correct_action += (preds == batch_action).sum().item()
-            total_samples += len(batch_x)
+            total_loss += loss.item() * len(bx)
+            correct_act += (torch.argmax(p_act, dim=1) == b_act).sum().item()
+            samples += len(bx)
             
         scheduler.step()
-        train_acc = correct_action / total_samples * 100.0
-        avg_loss = total_loss / total_samples
+        train_acc = correct_act / samples * 100.0
+        avg_loss = total_loss / samples
         
         # Validation
         model.eval()
         val_correct = 0
-        val_total = 0
+        val_samples = 0
         with torch.no_grad():
             for vx, v_act, v_sz in val_loader:
                 vx = vx.to(device)
                 v_act = v_act.to(device)
-                v_pred_act, _ = model(vx)
-                val_correct += (torch.argmax(v_pred_act, dim=1) == v_act).sum().item()
-                val_total += len(vx)
-        val_acc = val_correct / val_total * 100.0
+                vp_act, _ = model(vx)
+                val_correct += (torch.argmax(vp_act, dim=1) == v_act).sum().item()
+                val_samples += len(vx)
+                
+        val_acc = val_correct / val_samples * 100.0 if val_samples > 0 else 0.0
         
-        if epoch % 3 == 0 or epoch == epochs:
-            print(f"Epoch [{epoch:02d}/{epochs:02d}] | Train Loss: {avg_loss:.4f} | Train Acc: {train_acc:.2f}% | Val Acc: {val_acc:.2f}%")
-            
+        if epoch % 2 == 0 or epoch == epochs or val_acc > best_val_acc:
+            print(f"Epoch [{epoch:02d}/{epochs:02d}] | Loss: {avg_loss:.4f} | Train Acc: {train_acc:.2f}% | Val Acc: {val_acc:.2f}%")
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+            sys.stdout.flush()
+                
     elapsed = time.time() - start_time
-    print(f"\n[4/4] Training Complete in {elapsed:.2f}s!")
+    print(f"\nTraining Completed in {elapsed:.2f}s! Best Validation Accuracy: {best_val_acc:.2f}%")
+    sys.stdout.flush()
     
-    # Save checkpoint
-    out_path = "wonyo_nn_model.pt"
+    # -------------------------------------------------------------
+    # 4. Save PyTorch State Dict
+    # -------------------------------------------------------------
     torch.save({
         "model_state_dict": model.state_dict(),
         "input_dim": 12,
         "hidden_dim": 128,
-        "classes": ["HOLD", "BUY_LONG", "SELL_SHORT", "CLOSE"]
-    }, out_path)
-    print(f"Model saved successfully to: {os.path.abspath(out_path)}")
-    print(f"File size: {os.path.getsize(out_path) / 1024:.1f} KB")
-
+        "classes": labels
+    }, pt_out)
+    print(f"Saved PyTorch model: {pt_out} ({os.path.getsize(pt_out) / 1024:.1f} KB)")
+    
+    # -------------------------------------------------------------
+    # 5. Export to Production ONNX Format
+    # -------------------------------------------------------------
+    print(f"\n[ONNX Export] Converting PyTorch model to ONNX...")
+    model.eval()
+    dummy_input = torch.randn(1, 32, 12, device=device)
+    
+    torch.onnx.export(
+        model,
+        dummy_input,
+        onnx_out,
+        export_params=True,
+        opset_version=17,
+        do_constant_folding=True,
+        input_names=["market_tensor"],
+        output_names=["action_logits", "size_pred"],
+        dynamic_axes={
+            "market_tensor": {0: "batch_size"},
+            "action_logits": {0: "batch_size"},
+            "size_pred": {0: "batch_size"}
+        }
+    )
+    
+    print(f"Successfully exported ONNX model to: {onnx_out}")
+    print(f"ONNX Model File Size: {os.path.getsize(onnx_out) / 1024:.1f} KB")
+    
+    # Validate with onnx checker
+    onnx_model = onnx.load(onnx_out)
+    onnx.checker.check_model(onnx_model)
+    print("ONNX Model Graph Validation Passed!")
 
 if __name__ == "__main__":
-    train_model(epochs=12, batch_size=128, lr=0.002)
+    train_and_export_onnx(
+        npz_path="wonyo_dataset_real.npz",
+        epochs=30,
+        batch_size=64,
+        lr=0.0015,
+        onnx_out="wonyo_nn_model.onnx",
+        pt_out="wonyo_nn_model.pt"
+    )

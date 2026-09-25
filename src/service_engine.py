@@ -15,6 +15,7 @@ import numpy as np
 from src.risk_engine import WonyoRiskEngine, PortfolioState
 from src.wonyo_model import WonyoAIModel, ActionType
 from src.feature_extractor import WonyoFeatureExtractor
+from src.onnx_predictor import WonyoONNXPredictor
 
 @dataclass
 class CommercialSignalResponse:
@@ -32,6 +33,7 @@ class CommercialSignalResponse:
     risk_state: Dict[str, Any]
     status: str            # 'EXECUTABLE' or 'SAFE_MODE_BLOCKED'
     reason: str
+    nn_prediction: Optional[Dict[str, Any]] = None
 
 class WonyoSignalService:
     """
@@ -54,6 +56,7 @@ class WonyoSignalService:
         )
         self.model = WonyoAIModel(risk_engine=self.risk_engine)
         self.extractor = WonyoFeatureExtractor()
+        self.onnx_predictor = WonyoONNXPredictor()
         self.candle_buffer: List[Dict[str, Any]] = []
 
     def push_candle(self, candle: Dict[str, Any]):
@@ -126,6 +129,9 @@ class WonyoSignalService:
             "bearish_absorption": round(float(latest_row.get("bearish_absorption", 0.0)), 2)
         }
 
+        # Run Real-time ONNX Neural Network Inference
+        onnx_pred = self.onnx_predictor.predict(df_features)
+
         return CommercialSignalResponse(
             timestamp=str(latest_row.get("timestamp", pd.Timestamp.now())),
             action=action_str,
@@ -140,5 +146,6 @@ class WonyoSignalService:
             signal_confidence=round(float(decision.get("confidence", 0.0)), 3),
             risk_state=risk_state,
             status="EXECUTABLE" if is_executable else "SAFE_MODE_BLOCKED",
-            reason=decision.get("reason", "NOMINAL")
+            reason=decision.get("reason", "NOMINAL"),
+            nn_prediction=onnx_pred
         )

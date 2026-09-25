@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WONYO-AI | 비트코인 거래량 & 외부요인 무빙 예측 터미널</title>
+    <title>WONYO-AI | 비트코인 거래량 & 신경망(ONNX) 직감 예측 터미널</title>
     <!-- TradingView Lightweight Charts (Pinned Stable 4.2.0) -->
     <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
     <!-- Tailwind CSS CDN -->
@@ -12,572 +12,468 @@
     <style>
         body {
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-            background-color: #06080e;
+            background-color: #07090e;
             color: #d1d5db;
         }
         .mono {
             font-family: 'JetBrains Mono', monospace;
-        }
-        .glow-up {
-            box-shadow: 0 0 35px rgba(0, 255, 136, 0.35);
-            border-color: #00ff88 !important;
-        }
-        .glow-down {
-            box-shadow: 0 0 35px rgba(255, 51, 102, 0.35);
-            border-color: #ff3366 !important;
-        }
-        .glow-neutral {
-            box-shadow: 0 0 25px rgba(156, 163, 175, 0.2);
-            border-color: #4b5563 !important;
         }
         .hud-card {
             border: 1px solid rgba(255, 255, 255, 0.08);
             background: rgba(13, 17, 26, 0.88);
             backdrop-filter: blur(14px);
         }
+        .glow-up {
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.25);
+            border-color: rgba(0, 255, 136, 0.6) !important;
+        }
+        .glow-down {
+            box-shadow: 0 0 25px rgba(255, 51, 102, 0.25);
+            border-color: rgba(255, 51, 102, 0.6) !important;
+        }
+        .glow-neutral {
+            box-shadow: 0 0 15px rgba(156, 163, 175, 0.15);
+            border-color: rgba(75, 85, 99, 0.6) !important;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col p-3 md:p-5">
+<body class="min-h-screen flex flex-col p-2.5 sm:p-4 max-w-[1720px] mx-auto w-full">
 
-    <!-- Top Header -->
-    <header class="flex flex-wrap items-center justify-between pb-3 border-b border-gray-800 gap-3">
+    <!-- 1. SLIM EXECUTIVE HEADER (1-Line Navigation) -->
+    <header class="hud-card px-3.5 py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-2.5 border border-gray-800/90 shadow-lg">
+        <!-- Logo & Live Price -->
         <div class="flex items-center space-x-3">
-            <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-500 via-green-400 to-teal-300 flex items-center justify-center font-black text-black text-2xl shadow-lg shadow-emerald-500/20">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-green-400 to-teal-300 flex items-center justify-center font-black text-black text-xl shadow-md shadow-emerald-500/20">
                 W
             </div>
-            <div>
-                <div class="flex items-center space-x-2">
-                    <h1 class="text-xl md:text-2xl font-black tracking-tight text-white">워뇨-AI <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold">비트코인 직감 예측 모델</span></h1>
-                    <span id="live-indicator" class="flex h-2.5 w-2.5 relative">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                    </span>
-                    <span id="auto-refresh-badge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                        10초 자동 갱신
-                    </span>
-                    <span id="last-updated-badge" class="hidden md:inline text-xs font-mono text-gray-400"></span>
-                </div>
-                <p class="text-xs sm:text-sm text-gray-400 mt-0.5">거래량 오더플로우 흡수(Volume Absorption) + 외부 거시/변동성 요인 기반 실시간 방향 예측</p>
+            <div class="flex items-center space-x-2">
+                <span class="text-base sm:text-lg font-black tracking-tight text-white">워뇨-AI</span>
+                <span class="flex h-2.5 w-2.5 relative" id="live-indicator">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span id="auto-refresh-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">LIVE</span>
+            </div>
+            <div class="h-4 w-px bg-gray-700 hidden sm:block"></div>
+            <!-- BTC Price -->
+            <div class="flex items-baseline space-x-1.5">
+                <span class="text-xs text-gray-400 font-bold hidden sm:inline">BTC:</span>
+                <span id="live-btc-price" class="text-lg sm:text-xl font-black mono text-white tracking-tight">$---,---</span>
+                <span id="last-updated-badge" class="text-[10px] font-mono text-gray-400 hidden md:inline ml-1"></span>
             </div>
         </div>
 
-        <!-- Controls & Ticker -->
-        <div class="flex items-center flex-wrap gap-2.5">
-            <div class="hud-card px-4 py-2 rounded-xl flex items-center space-x-3">
-                <div>
-                    <div class="text-xs text-gray-400 font-bold uppercase tracking-wider">BTC 현재 시세</div>
-                    <div id="live-btc-price" class="text-2xl font-black mono text-white">$---,---</div>
-                </div>
+        <!-- Controls: Timeframe, Sensitivity, Mode, Refresh -->
+        <div class="flex items-center flex-wrap gap-2 text-xs font-bold">
+            <!-- Timeframe -->
+            <div class="flex items-center bg-black/50 p-1 rounded-xl border border-gray-800">
+                <button onclick="setIntervalTime('5m')" class="tf-btn px-2.5 py-1 rounded-lg text-gray-400 hover:text-white" data-tf="5m">5분</button>
+                <button onclick="setIntervalTime('15m')" class="tf-btn px-2.5 py-1 rounded-lg bg-gray-700 text-white" data-tf="15m">15분</button>
+                <button onclick="setIntervalTime('1h')" class="tf-btn px-2.5 py-1 rounded-lg text-gray-400 hover:text-white" data-tf="1h">1시간</button>
             </div>
 
-            <!-- Mode Selector -->
-            <div class="flex items-center hud-card p-1 rounded-xl">
-                <button id="btn-mode-live" onclick="setMode('live')" class="px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-emerald-500 text-black transition">실시간 LIVE</button>
-                <button id="btn-mode-replay" onclick="setMode('replay')" class="px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-gray-400 hover:text-white transition">2021 대폭락장 리플레이</button>
+            <!-- Sensitivity Mode -->
+            <div class="flex items-center bg-black/50 p-1 rounded-xl border border-gray-800">
+                <button onclick="setSensitivity('standard')" id="btn-sens-standard" class="sens-btn px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-sm" title="워뇨띠 실제 승률 중심 엄격한 관망">🛡️ 표준</button>
+                <button onclick="setSensitivity('active')" id="btn-sens-active" class="sens-btn px-2.5 py-1 rounded-lg text-gray-400 hover:text-white" title="단타 진입 기회 확대를 위한 조건 완화">⚡ 액티브</button>
             </div>
 
-            <!-- Timeframe Selector -->
-            <div class="flex items-center hud-card p-1 rounded-xl">
-                <button onclick="setIntervalTime('5m')" class="tf-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-gray-400 hover:text-white" data-tf="5m">5분봉</button>
-                <button onclick="setIntervalTime('15m')" class="tf-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-gray-700 text-white" data-tf="15m">15분봉</button>
-                <button onclick="setIntervalTime('1h')" class="tf-btn px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-gray-400 hover:text-white" data-tf="1h">1시간봉</button>
+            <!-- Live / Replay Mode -->
+            <div class="flex items-center bg-black/50 p-1 rounded-xl border border-gray-800">
+                <button id="btn-mode-live" onclick="setMode('live')" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-black">LIVE</button>
+                <button id="btn-mode-replay" onclick="setMode('replay')" class="px-2.5 py-1 rounded-lg text-gray-400 hover:text-white">리플레이</button>
             </div>
 
-            <!-- Trading Sensitivity Mode Toggle (워뇨띠 표준 vs 액티브 단타) -->
-            <div class="flex items-center hud-card p-1 rounded-xl">
-                <button onclick="setSensitivity('standard')" id="btn-sens-standard" class="sens-btn px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-emerald-600 text-white shadow-sm" title="워뇨띠 실제 승률 중심 엄격한 97% 관망">🛡️ 워뇨띠 표준</button>
-                <button onclick="setSensitivity('active')" id="btn-sens-active" class="sens-btn px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-gray-400 hover:text-white" title="단타 진입 기회 확대를 위한 조건 완화">⚡ 액티브 단타</button>
-            </div>
-
-            <!-- Manual Refresh -->
-            <button onclick="loadData()" class="p-2.5 rounded-xl hud-card text-gray-400 hover:text-emerald-400 transition" title="새로고침">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <!-- Refresh Button -->
+            <button onclick="loadData()" class="p-1.5 rounded-xl bg-black/50 border border-gray-800 text-gray-400 hover:text-emerald-400 transition" title="새로고침">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             </button>
         </div>
     </header>
 
-    <!-- WONYO 2-PANEL MASTER EXECUTIVE BOARD (상단 2대 마스터 패널) -->
-    <section class="mt-3 grid grid-cols-1 lg:grid-cols-12 gap-3">
+    <!-- 2. UNIFIED MASTER SIGNAL & ONNX NEURAL NETWORK BOARD (상단 통합 시그널 패널) -->
+    <section class="mt-2.5 grid grid-cols-1 lg:grid-cols-12 gap-2.5">
         
-        <!-- 패널 1: 지금 워뇨띠라면? (마스코트 직감 & 매수/매도/관망) (6 Cols) -->
-        <div id="panel-wonyo-decision" class="lg:col-span-6 p-3 sm:p-4 rounded-2xl hud-card border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/20 via-black to-blue-950/20 shadow-xl flex flex-col justify-between">
+        <!-- Left: Core Wonyotti Verdict (6 Cols) -->
+        <div id="panel-wonyo-decision" class="lg:col-span-6 p-3 sm:p-4 rounded-2xl hud-card border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/20 via-black to-slate-900/40 shadow-xl flex flex-col justify-between">
             <div>
-                <!-- Header -->
-                <div class="flex items-center justify-between pb-2 border-b border-gray-800/80 flex-wrap gap-y-1">
+                <!-- Top Row: Decision Header -->
+                <div class="flex items-center justify-between pb-2 border-b border-gray-800/80">
                     <div class="flex items-center space-x-2">
-                        <span class="text-lg">👑</span>
-                        <span class="text-sm sm:text-base font-black text-white uppercase tracking-wider">지금 워뇨띠라면?</span>
-                        <span id="wonyo-level-badge" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Lv.77 비맥 랭커</span>
+                        <span id="decision-icon" class="text-xl">👑</span>
+                        <span class="text-xs sm:text-sm font-black text-white uppercase tracking-wider">지금 워뇨띠라면?</span>
+                        <span id="decision-action-tag" class="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 border border-gray-700">HOLD</span>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <span id="wonyo-virtual-seed" class="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/30">가상 시드 10.35 BTC (+3.5%)</span>
-                        <span id="wonyo-expected-winrate" class="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">기대 승률 74.5%</span>
+                        <span id="wonyo-expected-winrate" class="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">워뇨띠 기대 승률 74.5%</span>
                     </div>
                 </div>
 
-                <!-- Wonyo Mascot & Live Speech Bubble Hero (팩폭 멘토) -->
-                <div class="mt-2.5 p-3 rounded-2xl bg-black/60 border border-gray-800/90 flex items-center gap-3.5 relative overflow-hidden">
-                    <!-- Mascot Avatar with glowing aura and click event -->
-                    <div class="relative shrink-0 cursor-pointer group" onclick="triggerWonyoQuote()" title="클릭하여 워뇨띠 팩폭 격언 듣기">
-                        <div id="mascot-aura" class="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-600 opacity-40 blur-sm group-hover:opacity-75 transition-all duration-300"></div>
-                        <img id="wonyo-mascot-img" src="/assets/mascot/hold.jpg" alt="Wonyo Mascot" 
-                             class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-500/60 shadow-md shadow-amber-500/20 group-hover:scale-105 active:scale-95 transition-all duration-200" />
-                        <span id="mascot-badge" class="absolute -bottom-1 -right-1 text-xs font-black px-2 py-0.5 rounded-md bg-gray-900 border border-amber-500 text-amber-400 shadow">
-                            😴 꿀잠
-                        </span>
+                <!-- Main Verdict & Playbook Banner -->
+                <div class="mt-2.5 flex items-center justify-between gap-3">
+                    <div class="flex-1">
+                        <div id="decision-headline" class="text-lg sm:text-xl font-black text-emerald-400 tracking-tight">
+                            관망 및 현금 대기 (HOLD)
+                        </div>
+                        <p id="decision-detail" class="mt-1 text-xs sm:text-sm text-gray-300 leading-snug font-medium line-clamp-2">
+                            "거래량이 안 터질 땐 무리하게 진입 안 하고 현금 들고 꿀잠 자는 게 돈 버는 거임 ☕"
+                        </p>
                     </div>
 
-                    <!-- Speech Bubble -->
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between flex-wrap gap-y-0.5">
-                            <div class="flex items-center space-x-2">
-                                <span id="decision-icon" class="text-base">💡</span>
-                                <span id="decision-headline" class="text-sm sm:text-base font-black text-white truncate">관망 및 현금 대기</span>
-                                <span id="decision-action-tag" class="text-xs font-extrabold px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 border border-gray-700">HOLD</span>
-                            </div>
-                            <span class="text-[11px] text-gray-500 font-mono hidden sm:inline cursor-pointer hover:text-amber-400 transition" onclick="triggerWonyoQuote()">[클릭: 격언 🔄]</span>
+                    <!-- 3-Way Selector Pills (매수 / 매도 / 관망) -->
+                    <div class="grid grid-cols-3 gap-1 shrink-0 w-44 sm:w-52 text-center text-[11px] font-bold">
+                        <div id="state-buy-btn" class="p-1.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40">
+                            <span class="font-black text-gray-400">▲ BUY</span>
+                            <span class="text-[9px] text-gray-500">롱 진입</span>
                         </div>
-                        <div class="mt-1.5 p-2 rounded-xl bg-gray-900/80 border border-gray-800/80 text-xs sm:text-sm text-gray-200 leading-relaxed font-medium cursor-pointer hover:border-gray-700 transition" onclick="triggerWonyoQuote()" title="클릭하여 워뇨띠 실전 격언 바꾸기">
-                            <p id="decision-detail" class="line-clamp-2 transition-opacity duration-200">
-                                "거래량도 없는데 손가락 근질거리죠? 지금 들어가면 시드만 녹습니다. 뇌동매매 멈추고 산책이나 다녀오세요."
-                            </p>
+                        <div id="state-sell-btn" class="p-1.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40">
+                            <span class="font-black text-gray-400">▼ SELL</span>
+                            <span class="text-[9px] text-gray-500">숏 진입</span>
+                        </div>
+                        <div id="state-hold-btn" class="p-1.5 rounded-xl border-2 border-amber-400/80 bg-amber-950/30 text-amber-400 transition-all flex flex-col items-center">
+                            <span class="font-black text-amber-400">⏸️ HOLD</span>
+                            <span class="text-[9px] text-amber-300">관망</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- 3-Button State Switcher (매수 / 매도 / 관망) -->
-                <div class="grid grid-cols-3 gap-2 mt-2.5 text-center">
-                    <!-- 매수 BUY Button/Badge -->
-                    <div id="state-buy-btn" class="p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
-                        <div class="text-sm sm:text-base font-black text-gray-400 flex items-center space-x-1">
-                            <span>▲</span><span>매수 (BUY)</span>
-                        </div>
-                        <span class="text-xs text-gray-400 mt-0.5">지정가 롱 진입</span>
+                <!-- Signal Readiness Bar -->
+                <div class="mt-2.5 pt-2 border-t border-gray-800/60">
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 mb-1">
+                        <span>진입 준비도: <b id="readiness-long-text" class="text-emerald-400">0%</b> (롱) / <b id="readiness-short-text" class="text-rose-400">0%</b> (숏)</span>
+                        <span id="readiness-mode-badge" class="px-1.5 py-0.2 rounded bg-gray-800 text-gray-400 font-mono text-[10px]">목표 62%</span>
                     </div>
-
-                    <!-- 매도 SELL Button/Badge -->
-                    <div id="state-sell-btn" class="p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
-                        <div class="text-sm sm:text-base font-black text-gray-400 flex items-center space-x-1">
-                            <span>▼</span><span>매도 (SELL)</span>
-                        </div>
-                        <span class="text-xs text-gray-400 mt-0.5">지정가 숏/현금화</span>
-                    </div>
-
-                    <!-- 중립 NEUTRAL Button/Badge -->
-                    <div id="state-hold-btn" class="p-2.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center">
-                        <div class="text-sm sm:text-base font-black text-gray-400 flex items-center space-x-1">
-                            <span>━</span><span>관망 (HOLD)</span>
-                        </div>
-                        <span class="text-xs text-gray-400 mt-0.5">거래량 대기</span>
-                    </div>
-                </div>
-
-                <!-- Next Entry Readiness Radar (신호 조건 충족률 게이지) -->
-                <div id="readiness-box" class="mt-2.5 p-2.5 rounded-xl bg-gray-900/80 border border-gray-800/80">
-                    <div class="flex items-center justify-between text-xs mb-1.5">
-                        <span class="flex items-center space-x-1 font-bold text-gray-200">
-                            <span class="text-emerald-400">🎯</span>
-                            <span>다음 진입 조건 충족률</span>
-                        </span>
-                        <div class="flex items-center space-x-2 font-mono text-xs">
-                            <span class="text-emerald-400 font-bold">롱: <span id="readiness-long-text">0%</span></span>
-                            <span class="text-gray-600">|</span>
-                            <span class="text-rose-400 font-bold">숏: <span id="readiness-short-text">0%</span></span>
-                        </div>
-                    </div>
-                    <!-- Dual Progress Bar -->
-                    <div class="w-full bg-gray-950 h-2.5 rounded-full overflow-hidden flex p-0.5 border border-gray-800">
+                    <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden flex border border-gray-800">
                         <div id="readiness-long-bar" class="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
                         <div class="flex-1"></div>
                         <div id="readiness-short-bar" class="bg-gradient-to-l from-rose-600 to-rose-400 h-full rounded-full transition-all duration-500" style="width: 0%;"></div>
                     </div>
-                    <div class="flex items-center justify-between text-xs text-gray-400 mt-1.5">
-                        <span id="readiness-hint-text" class="truncate pr-1 text-gray-300">⏳ 대기 요인: 거래량 폭발 대기 중</span>
-                        <span id="readiness-mode-badge" class="shrink-0 px-1.5 py-0.5 rounded bg-gray-800 text-gray-400 font-mono text-[10px]">목표 62%</span>
+                    <div id="readiness-hint-text" class="text-[11px] text-gray-400 truncate mt-1">
+                        ⏳ 거래량 폭발 및 꼬리 흡수 대기 중
                     </div>
                 </div>
             </div>
-
-            <!-- Bottom Quick Factors (거래량, 시장 흐름, 심리/뉴스) -->
-            <div class="grid grid-cols-3 gap-2 mt-2.5 pt-2 border-t border-gray-800/60 text-xs sm:text-sm">
-                <div class="truncate"><span class="text-gray-400">거래량:</span> <strong id="sb-vol-status" class="text-emerald-400 font-bold">소강</strong></div>
-                <div class="truncate"><span class="text-gray-400">시장흐름:</span> <strong id="sb-ext-status" class="text-gray-200 font-bold">박스권</strong></div>
-                <div class="truncate"><span class="text-gray-400">심리/뉴스:</span> <strong id="sb-news-status" class="text-amber-400 font-bold">탐욕 71pt</strong></div>
-            </div>
         </div>
 
-        <!-- 패널 2: 만약 들어갔다면? (가상 실전 포지션 & 투입 규모) (6 Cols) -->
-        <div id="panel-active-position" class="lg:col-span-6 p-3 sm:p-4 rounded-2xl hud-card border-2 border-blue-500/40 bg-gradient-to-br from-blue-950/20 via-black to-purple-950/20 shadow-xl flex flex-col justify-between">
+        <!-- Right: 600MB Real-Trained ONNX Neural Network (6 Cols) -->
+        <div class="lg:col-span-6 p-3 sm:p-4 rounded-2xl hud-card border-2 border-indigo-500/40 bg-gradient-to-br from-indigo-950/20 via-black to-slate-900/40 shadow-xl flex flex-col justify-between">
             <div>
-                <!-- Header -->
+                <!-- Top Row: ONNX Model Header -->
                 <div class="flex items-center justify-between pb-2 border-b border-gray-800/80">
                     <div class="flex items-center space-x-2">
-                        <span class="text-lg">💼</span>
-                        <span class="text-sm sm:text-base font-black text-white uppercase tracking-wider">만약 들어갔다면? (가상 포지션 & 실시간 손익)</span>
+                        <span class="text-xl">🧠</span>
+                        <span class="text-xs sm:text-sm font-black text-white uppercase tracking-wider">신경망(ONNX) AI 직감 예측</span>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold">600MB 실거래 전수학습</span>
                     </div>
-                    <span id="pos-status-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">LONG 포지션</span>
+                    <div class="flex items-center space-x-1.5 text-xs font-mono">
+                        <span class="text-gray-400">C++ 추론:</span>
+                        <span id="onnx-latency" class="text-emerald-400 font-bold">0.36ms</span>
+                    </div>
                 </div>
 
-                <!-- 4 Metrics Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2.5">
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-xs text-gray-400 font-bold uppercase">포지션 방향</div>
-                        <div id="pos-side-text" class="text-sm sm:text-base font-black text-emerald-400 mt-0.5 flex items-center space-x-1">
-                            <span>▲ LONG</span>
+                <!-- ONNX Action & Multi-Class Probability Distribution -->
+                <div class="mt-2.5 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                    <!-- Action Badge -->
+                    <div class="sm:col-span-5 bg-black/50 p-2.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                        <div>
+                            <div class="text-[10px] text-gray-400 font-bold uppercase">신경망 판단</div>
+                            <div id="onnx-action-text" class="text-base sm:text-lg font-black text-white mt-0.5">
+                                <span id="onnx-action-badge" class="px-2 py-0.5 rounded text-xs font-extrabold bg-gray-800 text-gray-300">HOLD</span>
+                            </div>
                         </div>
-                        <div id="pos-leverage-text" class="text-xs text-gray-300 font-mono">레버리지 1.85x</div>
-                    </div>
-
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-xs text-gray-400 font-bold uppercase">진입 체결가</div>
-                        <div id="pos-entry-price" class="text-sm sm:text-base font-black mono text-white mt-0.5">$---,---</div>
-                        <div class="text-xs text-gray-400">지정가 Touch</div>
-                    </div>
-
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-xs text-gray-400 font-bold uppercase">투입 규모</div>
-                        <div id="pos-size-contracts" class="text-sm sm:text-base font-black mono text-cyan-400 mt-0.5">--- 계약</div>
-                        <div id="pos-size-usd" class="text-xs text-gray-300 mono">($---,---)</div>
-                    </div>
-
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-xs text-gray-400 font-bold uppercase">실시간 손익</div>
-                        <div id="pos-live-pnl" class="text-sm sm:text-base font-black mono text-emerald-400 mt-0.5">+0.00%</div>
-                        <div id="pos-pnl-usd" class="text-xs text-gray-300 mono">(+$0.00)</div>
-                    </div>
-                </div>
-
-                <!-- Execution Rules & Holding Timer -->
-                <div class="mt-2.5 p-3 rounded-xl bg-black/50 border border-gray-800 flex items-center justify-between text-xs sm:text-sm">
-                    <div>
-                        <div class="text-xs text-gray-400 font-bold uppercase">손익 탈출 가이드 (16분 초단타 원칙)</div>
-                        <div class="flex items-center space-x-2.5 mt-1 mono text-xs sm:text-sm">
-                            <span>🛑 칼손절: <strong id="pos-sl-price" class="text-rose-400 font-bold">$---</strong></span>
-                            <span>•</span>
-                            <span>🎯 1차 익절: <strong id="pos-tp-price" class="text-emerald-400 font-bold">$---</strong></span>
+                        <div class="text-right">
+                            <div class="text-[10px] text-gray-400 font-bold uppercase">확신도 / 배율</div>
+                            <div id="onnx-conf-text" class="text-xs sm:text-sm font-bold text-indigo-300 mono mt-0.5">--% / 1.0x</div>
                         </div>
                     </div>
-                    <div class="text-right shrink-0">
-                        <div class="text-xs text-gray-400 font-bold">권장 보유 시간</div>
-                        <div id="pos-holding-timer" class="text-xs sm:text-sm font-black mono text-amber-400 mt-0.5">16.35분 익절 타깃</div>
+
+                    <!-- 4-Class Probability Bar -->
+                    <div class="sm:col-span-7 bg-black/40 p-2.5 rounded-xl border border-gray-800">
+                        <div class="flex items-center justify-between text-[11px] font-mono text-gray-400 mb-1">
+                            <span>HOLD <b id="onnx-prob-hold" class="text-gray-200">--%</b></span>
+                            <span>BUY <b id="onnx-prob-long" class="text-emerald-400">--%</b></span>
+                            <span>SELL <b id="onnx-prob-short" class="text-rose-400">--%</b></span>
+                            <span>CLOSE <b id="onnx-prob-close" class="text-amber-400">--%</b></span>
+                        </div>
+                        <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden flex">
+                            <div id="onnx-bar-hold" class="bg-gray-500 h-full transition-all duration-300" style="width: 50%;"></div>
+                            <div id="onnx-bar-long" class="bg-emerald-500 h-full transition-all duration-300" style="width: 25%;"></div>
+                            <div id="onnx-bar-short" class="bg-rose-500 h-full transition-all duration-300" style="width: 20%;"></div>
+                            <div id="onnx-bar-close" class="bg-amber-500 h-full transition-all duration-300" style="width: 5%;"></div>
+                        </div>
+                        <div class="mt-1 flex justify-between text-[10px] text-gray-400">
+                            <span>WonyoImitationNet (1D-CNN + BiGRU + Attn)</span>
+                            <span class="text-indigo-400 font-mono">ONNX Runtime 1.30</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Institutional Micro-Risk Chips -->
+                <div class="grid grid-cols-4 gap-1.5 mt-2.5 pt-2 border-t border-gray-800/60 text-[11px] font-mono">
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                        <div class="text-[9px] text-gray-400">바닥 매수흡수</div>
+                        <div id="val-bull-abs" class="font-bold text-emerald-400">0.00</div>
+                    </div>
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                        <div class="text-[9px] text-gray-400">고점 매도저항</div>
+                        <div id="val-bear-abs" class="font-bold text-rose-400">0.00</div>
+                    </div>
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                        <div class="text-[9px] text-gray-400">변동성 위험</div>
+                        <div id="val-regime-risk" class="font-bold text-white">NORMAL</div>
+                    </div>
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                        <div class="text-[9px] text-gray-400">추세 효율비</div>
+                        <div id="val-kaufman" class="font-bold text-amber-400">0.00</div>
                     </div>
                 </div>
             </div>
-
-            <!-- Bottom Scratch Rule Note -->
-            <div class="mt-2.5 pt-2 border-t border-gray-800/60 flex items-center justify-between text-xs sm:text-sm text-gray-300">
-                <span>⚡ <strong>조기 탈출 룰:</strong> 60분 내 미반등 시 본전/약손실(-0.4%)에 전량 탈출</span>
-                <span id="pos-rule-tag" class="text-emerald-400 font-mono font-bold">지정가 수수료 환급 66.9%</span>
-            </div>
-        </div>
-
-    </section>
-
-    <!-- 실시간 속보 뉴스 티커 (Breaking News Ticker) -->
-    <section class="mt-3 px-4 py-2.5 rounded-xl hud-card border border-gray-800/80 bg-black/40 flex items-center space-x-3 text-xs sm:text-sm">
-        <span class="px-2.5 py-0.5 rounded bg-rose-500/20 text-rose-400 text-xs font-black uppercase shrink-0">속보/SNS 주목도</span>
-        <div class="overflow-hidden relative w-full h-5">
-            <div id="sb-news-ticker" class="text-gray-300 truncate">
-                최신 크립토 속보 수신 중...
-            </div>
         </div>
     </section>
 
-    <!-- Main Grid -->
-    <main class="grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3 flex-1">
+    <!-- 3. MAIN WORKSPACE: CHART (7 COLS) + ONE-STOP ORDER/POSITION (5 COLS) -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-2.5 mt-2.5 flex-1">
         
-        <!-- Left: Interactive Candlestick + Volume Chart (7 Cols) -->
-        <section class="lg:col-span-7 flex flex-col space-y-2.5">
-            <div class="hud-card rounded-2xl p-3 sm:p-4 flex-1 flex flex-col relative min-h-[380px]">
+        <!-- Left: Interactive Candlestick + Volume Absorption Chart (7 Cols) -->
+        <section class="lg:col-span-7 flex flex-col space-y-2">
+            <div class="hud-card rounded-2xl p-3 sm:p-4 flex-1 flex flex-col relative min-h-[400px]">
                 <div class="flex items-center justify-between pb-2 border-b border-gray-800">
                     <div class="flex items-center space-x-2">
-                        <span class="text-sm sm:text-base font-bold text-gray-200">BTC 캔들 & 거래량 오더플로우</span>
-                        <span id="chart-timeframe-tag" class="text-xs px-2.5 py-0.5 rounded bg-gray-800 text-emerald-400 mono font-bold">15M</span>
-                        <span class="text-xs px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-700/50 font-mono font-bold">한국 시간 (KST)</span>
+                        <span class="text-sm sm:text-base font-bold text-gray-200">BTC 캔들 & 오더플로우 거래량</span>
+                        <span id="chart-timeframe-tag" class="text-xs px-2 py-0.5 rounded bg-gray-800 text-emerald-400 mono font-bold">15M</span>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-700/50 font-mono font-bold">KST</span>
                     </div>
-                    <div class="flex items-center space-x-3 text-xs sm:text-sm font-medium">
+                    <div class="flex items-center space-x-3 text-xs font-medium">
                         <div class="flex items-center space-x-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
-                            <span class="text-gray-200">바닥 매수 흡수</span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                            <span class="text-gray-300">바닥 매수 흡수</span>
                         </div>
                         <div class="flex items-center space-x-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500"></span>
-                            <span class="text-gray-200">고점 매도 저항</span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                            <span class="text-gray-300">고점 매도 저항</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Lightweight Chart Canvas (Compact 350px) -->
-                <div id="chart-container" class="w-full flex-1 mt-2 min-h-[330px] h-[350px]"></div>
+                <!-- Lightweight Chart Canvas (400px Clean View) -->
+                <div id="chart-container" class="w-full flex-1 mt-2 min-h-[360px] h-[390px]"></div>
             </div>
 
-            <!-- Mini Metric Cards with Easy Terms -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div class="hud-card p-3 rounded-xl">
-                    <div class="text-xs text-gray-400 font-bold">거래량 터짐 지수</div>
-                    <div id="metric-vol-z" class="text-lg sm:text-xl font-black mono text-emerald-400 mt-0.5">+0.00</div>
-                    <div class="text-xs text-gray-400 mt-0.5">> 2.0 큰손 개입</div>
+            <!-- 4 Quick Key Metrics Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="text-[11px] text-gray-400 font-bold">거래량 터짐 지수</div>
+                    <div id="metric-vol-z" class="text-base sm:text-lg font-black mono text-emerald-400 mt-0.5">+0.00</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">> 2.0 고래 개입</div>
                 </div>
-                <div class="hud-card p-3 rounded-xl">
-                    <div class="text-xs text-gray-400 font-bold">평소 대비 거래량</div>
-                    <div id="metric-vol-exh" class="text-lg sm:text-xl font-black mono text-white mt-0.5">1.00x</div>
-                    <div class="text-xs text-gray-400 mt-0.5">20봉 평균 대비</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="text-[11px] text-gray-400 font-bold">평소 대비 거래량</div>
+                    <div id="metric-vol-exh" class="text-base sm:text-lg font-black mono text-white mt-0.5">1.00x</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">20봉 평균 대비</div>
                 </div>
-                <div class="hud-card p-3 rounded-xl">
-                    <div class="text-xs text-gray-400 font-bold">추세선 위치 (이격도)</div>
-                    <div id="metric-trend-bias" class="text-lg sm:text-xl font-black mono text-gray-300 mt-0.5">0.00%</div>
-                    <div class="text-xs text-gray-400 mt-0.5">50선 기준 이격</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="text-[11px] text-gray-400 font-bold">추세선 이격도</div>
+                    <div id="metric-trend-bias" class="text-base sm:text-lg font-black mono text-gray-300 mt-0.5">0.00%</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">50선 기준 이격</div>
                 </div>
-                <div class="hud-card p-3 rounded-xl">
-                    <div class="text-xs text-gray-400 font-bold">1봉당 흔들기 폭</div>
-                    <div id="metric-atr-pct" class="text-lg sm:text-xl font-black mono text-amber-400 mt-0.5">1.00%</div>
-                    <div class="text-xs text-gray-400 mt-0.5">평균 변동성 크기</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="text-[11px] text-gray-400 font-bold">1봉당 흔들기 폭</div>
+                    <div id="metric-atr-pct" class="text-base sm:text-lg font-black mono text-amber-400 mt-0.5">1.00%</div>
+                    <div class="text-[10px] text-gray-400 mt-0.5">평균 변동성 크기</div>
                 </div>
             </div>
         </section>
 
-        <!-- Right: Intuitive Prediction & Dual-Factor Analysis (5 Cols) -->
-        <section class="lg:col-span-5 flex flex-col space-y-2.5">
+        <!-- Right: One-Stop Execution & Position Card + Mini-Ledger (5 Cols) -->
+        <section class="lg:col-span-5 flex flex-col space-y-2">
             
-            <!-- MASTER VERDICT & COMPASS GAUGE (Compact) -->
-            <div id="verdict-card" class="hud-card rounded-2xl p-3.5 sm:p-4 transition-all duration-300 border-2">
-                <div class="flex items-center justify-between text-xs sm:text-sm text-gray-400 font-bold uppercase tracking-wider">
-                    <span>무빙 나침반 & 시장 압력</span>
-                    <span id="verdict-confidence" class="mono px-2.5 py-0.5 rounded-full bg-gray-800 text-gray-200 text-xs font-bold">신뢰도: --%</span>
+            <!-- Real Position & Execution Plan Card -->
+            <div id="panel-active-position" class="hud-card rounded-2xl p-3 sm:p-4 border-2 border-blue-500/40 bg-gradient-to-br from-blue-950/20 via-black to-slate-900/40 shadow-xl">
+                <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">💼</span>
+                        <span class="text-xs sm:text-sm font-black text-white uppercase tracking-wider">실전 주문 & 가상 포지션</span>
+                    </div>
+                    <span id="pos-status-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">LONG 포지션</span>
                 </div>
 
-                <!-- Big Visual Direction Header -->
-                <div class="mt-2.5 flex items-center justify-between">
-                    <div>
-                        <div id="verdict-text" class="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                            분석 중...
-                        </div>
-                        <div id="verdict-subtext" class="text-xs sm:text-sm text-gray-300 mt-0.5 font-medium line-clamp-1">
-                            거래량 오더플로우 및 시장 요인을 분석 중입니다.
-                        </div>
+                <!-- Position Metrics Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2.5">
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-400 font-bold uppercase">포지션 / 배율</div>
+                        <div id="pos-side-text" class="text-xs sm:text-sm font-black text-emerald-400 mt-0.5">▲ LONG</div>
+                        <div id="pos-leverage-text" class="text-[10px] text-gray-300 font-mono">1.85x</div>
                     </div>
-                    <div id="verdict-icon" class="text-4xl">⏳</div>
-                </div>
-
-                <!-- Bull / Bear Compass Gauge Meter -->
-                <div class="mt-3 pt-2.5 border-t border-gray-800">
-                    <div class="flex justify-between text-xs sm:text-sm font-bold mb-1">
-                        <span class="text-rose-400 flex items-center space-x-1"><span>▼</span><span>하락 압력</span></span>
-                        <span id="meter-score-text" class="mono text-white font-extrabold text-sm">0 pt</span>
-                        <span class="text-emerald-400 flex items-center space-x-1"><span>상승 압력</span><span>▲</span></span>
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-400 font-bold uppercase">진입 체결가</div>
+                        <div id="pos-entry-price" class="text-xs sm:text-sm font-black mono text-white mt-0.5">$---,---</div>
+                        <div class="text-[10px] text-gray-400">지정가 Touch</div>
                     </div>
-                    <!-- Two-sided Meter Bar -->
-                    <div class="h-2.5 w-full bg-gray-900 rounded-full overflow-hidden flex relative border border-gray-800">
-                        <div class="w-1/2 flex justify-end">
-                            <div id="meter-bear-bar" class="bg-gradient-to-l from-rose-500 to-rose-700 h-full rounded-l-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                        <div class="w-1 bg-white/80 h-full z-10"></div>
-                        <div class="w-1/2 flex justify-start">
-                            <div id="meter-bull-bar" class="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full rounded-r-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-400 font-bold uppercase">투입 규모</div>
+                        <div id="pos-size-contracts" class="text-xs sm:text-sm font-black mono text-cyan-400 mt-0.5">--- 계약</div>
+                        <div id="pos-size-usd" class="text-[10px] text-gray-300 mono">($---,---)</div>
+                    </div>
+                    <div class="bg-black/40 p-2 rounded-xl border border-gray-800">
+                        <div class="text-[10px] text-gray-400 font-bold uppercase">실시간 손익</div>
+                        <div id="pos-live-pnl" class="text-xs sm:text-sm font-black mono text-emerald-400 mt-0.5">+0.00%</div>
+                        <div id="pos-pnl-usd" class="text-[10px] text-gray-300 mono">(+$0.00)</div>
                     </div>
                 </div>
 
-                <!-- Actionable Strategy Playbook -->
-                <div class="mt-3 p-2.5 rounded-xl bg-black/40 border border-gray-800 flex items-start space-x-2.5">
-                    <span class="text-lg">💡</span>
-                    <div>
-                        <div class="text-xs font-bold text-gray-300 uppercase tracking-wide">워뇨띠 실전 매매 팁</div>
-                        <div id="playbook-text" class="text-xs sm:text-sm text-gray-200 mt-0.5 leading-relaxed line-clamp-2">
-                            거래량 데이터 수신 대기 중입니다.
-                        </div>
+                <!-- Order Plan (Limit / TP / SL / Timer) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 pt-2 border-t border-gray-800/80 text-xs mono">
+                    <div class="bg-black/30 p-2 rounded-xl border border-gray-800/80">
+                        <div class="text-[10px] text-gray-400 font-sans">목표 진입가</div>
+                        <div id="plan-entry-px" class="text-xs sm:text-sm font-bold text-white mt-0.5">$---,---</div>
                     </div>
-                </div>
-            </div>
-
-            <!-- DUAL FACTORS BREAKDOWN: 쉬운 3대 판단 근거 -->
-            <div class="hud-card rounded-2xl p-3.5 sm:p-4 space-y-3">
-                <div class="text-xs sm:text-sm font-black uppercase tracking-wider text-gray-200 flex items-center space-x-1.5 pb-2 border-b border-gray-800">
-                    <span>실시간 3대 핵심 근거</span>
-                </div>
-
-                <!-- Factor 1: Volume Factor -->
-                <div class="p-3 rounded-xl bg-black/30 border border-gray-800/80">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <div class="flex items-center space-x-1.5">
-                            <span class="text-base">📊</span>
-                            <span class="text-sm font-bold text-white">1. 고래 물량 흡수율</span>
-                        </div>
-                        <span id="vol-badge" class="text-xs font-extrabold px-2 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
+                    <div class="bg-black/30 p-2 rounded-xl border border-gray-800/80">
+                        <div class="text-[10px] text-emerald-400 font-sans">1차 익절가 (+1.2%)</div>
+                        <div id="plan-tp-px" class="text-xs sm:text-sm font-bold text-emerald-400 mt-0.5">$---,---</div>
                     </div>
-                    <p id="vol-desc" class="text-xs sm:text-sm text-gray-300 leading-relaxed line-clamp-2">
-                        거래량 지표 계산 대기 중입니다.
-                    </p>
-                    <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-800/60 text-xs">
-                        <div>
-                            <div class="flex justify-between text-gray-400 mb-0.5">
-                                <span>바닥 매수 흡수</span>
-                                <span id="val-bull-abs" class="mono font-bold text-emerald-400">0.00</span>
-                            </div>
-                            <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                                <div id="bar-bull-abs" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-gray-400 mb-0.5">
-                                <span>고점 매도 저항</span>
-                                <span id="val-bear-abs" class="mono font-bold text-rose-400">0.00</span>
-                            </div>
-                            <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                                <div id="bar-bear-abs" class="h-full bg-rose-500 transition-all duration-300" style="width: 0%"></div>
-                            </div>
-                        </div>
+                    <div class="bg-black/30 p-2 rounded-xl border border-gray-800/80">
+                        <div class="text-[10px] text-rose-400 font-sans">동적 칼손절가 (-1.4%)</div>
+                        <div id="plan-sl-px" class="text-xs sm:text-sm font-bold text-rose-400 mt-0.5">$---,---</div>
+                    </div>
+                    <div class="bg-black/30 p-2 rounded-xl border border-gray-800/80">
+                        <div class="text-[10px] text-amber-400 font-sans">보유 타이머</div>
+                        <div id="plan-hold-time" class="text-xs sm:text-sm font-bold text-amber-400 mt-0.5">16.35 분</div>
                     </div>
                 </div>
 
-                <!-- Factor 2: External Factor -->
-                <div class="p-3 rounded-xl bg-black/30 border border-gray-800/80">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <div class="flex items-center space-x-1.5">
-                            <span class="text-base">🌐</span>
-                            <span class="text-sm font-bold text-white">2. 시장 환경 & 변동성</span>
-                        </div>
-                        <span id="ext-badge" class="text-xs font-extrabold px-2 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
+                <!-- Holding Timer & Scratch Exit Badge -->
+                <div class="mt-2 p-2 rounded-xl bg-black/40 border border-gray-800 flex items-center justify-between text-xs">
+                    <div class="flex items-center space-x-1.5">
+                        <span class="text-gray-400 font-sans">보유 경과:</span>
+                        <span id="pos-holding-timer" class="font-bold mono text-emerald-400">00:00 (16.35분 기준)</span>
                     </div>
-                    <p id="ext-desc" class="text-xs sm:text-sm text-gray-300 leading-relaxed line-clamp-1">
-                        외부 시장 지표 계산 대기 중입니다.
-                    </p>
-                    <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-800/60 text-xs">
-                        <div class="flex justify-between text-gray-300">
-                            <span>변동 위험:</span>
-                            <span id="val-regime-risk" class="mono font-bold text-white">NORMAL</span>
-                        </div>
-                        <div class="flex justify-between text-gray-300">
-                            <span>추세 깔끔함:</span>
-                            <span id="val-kaufman" class="mono font-bold text-white">0.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Factor 3: News & SNS Factor -->
-                <div class="p-3 rounded-xl bg-black/30 border border-gray-800/80">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <div class="flex items-center space-x-1.5">
-                            <span class="text-base">📰</span>
-                            <span class="text-sm font-bold text-white">3. 시장 심리 & 뉴스</span>
-                        </div>
-                        <span id="news-badge" class="text-xs font-extrabold px-2 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mt-1.5 text-xs">
-                        <div class="flex justify-between text-gray-300">
-                            <span>공포·탐욕 지수:</span>
-                            <span id="val-fng" class="mono font-bold text-amber-400">-- pt</span>
-                        </div>
-                        <div class="flex justify-between text-gray-300">
-                            <span>시장 주목도:</span>
-                            <span id="val-attention" class="mono font-bold text-white truncate max-w-[110px]">NORMAL</span>
-                        </div>
-                    </div>
+                    <span id="pos-exit-rule-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        60분 스크래치 탈출 대기
+                    </span>
                 </div>
             </div>
 
-            <!-- ORDER PLAN CARD (Compact) -->
-            <div class="hud-card rounded-2xl p-3.5 sm:p-4">
-                <div class="flex items-center justify-between pb-2 border-b border-gray-800 text-xs sm:text-sm font-bold text-gray-300">
-                    <span>워뇨띠식 주문 플랜</span>
-                    <span class="text-xs mono text-emerald-400 font-extrabold">지정가 (수수료 환급)</span>
+            <!-- Recent Trades Mini-Ledger (최근 체결 장부) -->
+            <div class="hud-card rounded-2xl p-3 sm:p-4 flex-1 flex flex-col justify-between">
+                <div>
+                    <!-- Tabs -->
+                    <div class="flex items-center justify-between pb-2 border-b border-gray-800 text-xs">
+                        <div class="flex items-center space-x-2">
+                            <button id="tab-btn-live-trades" onclick="switchTradeTab('live')" 
+                                    class="px-2.5 py-1 rounded-lg font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center space-x-1">
+                                <span>⚡ 실시간 체결 장부</span>
+                                <span id="badge-live-trades-count" class="px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-[9px] font-mono">5건</span>
+                            </button>
+                            <button id="tab-btn-legend-trades" onclick="switchTradeTab('legend')" 
+                                    class="px-2.5 py-1 rounded-lg font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1">
+                                <span>🏆 2021 전설 복기</span>
+                            </button>
+                        </div>
+                        <div class="text-[11px] font-mono text-gray-400 hidden sm:flex items-center space-x-2">
+                            <span>승률: <b id="sum-winrate" class="text-emerald-400">77.8%</b></span>
+                            <span>손익: <b id="sum-pnl" class="text-emerald-400">+3,537.3 BTC</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Live Trades Table (Compact Max-Height 190px) -->
+                    <div id="tab-content-live" class="overflow-y-auto max-h-[190px] mt-2">
+                        <table class="w-full text-left text-xs font-mono">
+                            <thead>
+                                <tr class="text-[10px] text-gray-400 border-b border-gray-800">
+                                    <th class="py-1.5 px-1 font-sans">시간</th>
+                                    <th class="py-1.5 px-1 font-sans">포지션</th>
+                                    <th class="py-1.5 px-1 font-sans">진입가</th>
+                                    <th class="py-1.5 px-1 font-sans">탈출 사유</th>
+                                    <th class="py-1.5 px-1 font-sans">수익률</th>
+                                </tr>
+                            </thead>
+                            <tbody id="live-trades-tbody" class="divide-y divide-gray-800/40 text-xs">
+                                <tr><td colspan="5" class="py-3 text-center text-gray-400 font-sans">체결 내역 로딩 중...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Legend Trades Table -->
+                    <div id="tab-content-legend" class="overflow-y-auto max-h-[190px] mt-2 hidden">
+                        <table class="w-full text-left text-xs font-mono">
+                            <thead>
+                                <tr class="text-[10px] text-gray-400 border-b border-gray-800">
+                                    <th class="py-1.5 px-1 font-sans">일시</th>
+                                    <th class="py-1.5 px-1 font-sans">역사적 사건</th>
+                                    <th class="py-1.5 px-1 font-sans">포지션</th>
+                                    <th class="py-1.5 px-1 font-sans">실현 손익</th>
+                                    <th class="py-1.5 px-1 font-sans text-right">복기</th>
+                                </tr>
+                            </thead>
+                            <tbody id="legend-trades-tbody" class="divide-y divide-gray-800/40 text-xs">
+                                <tr><td colspan="5" class="py-3 text-center text-gray-400 font-sans">전설 기록 로딩 중...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2.5 text-xs mono">
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-xs text-gray-400 font-sans">진입 목표가</div>
-                        <div id="plan-entry-px" class="text-sm sm:text-base font-bold text-white mt-0.5">$---,---</div>
-                    </div>
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-xs text-emerald-400 font-sans">예상 보유 시간</div>
-                        <div id="plan-hold-time" class="text-sm sm:text-base font-bold text-emerald-400 mt-0.5">16.35 분</div>
-                    </div>
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-xs text-rose-400 font-sans">동적 칼손절가</div>
-                        <div id="plan-sl-px" class="text-sm sm:text-base font-bold text-rose-400 mt-0.5">$---,---</div>
-                    </div>
-                    <div class="bg-black/40 p-2.5 rounded-xl border border-gray-800">
-                        <div class="text-xs text-emerald-400 font-sans">1차 익절가</div>
-                        <div id="plan-tp-px" class="text-sm sm:text-base font-bold text-emerald-400 mt-0.5">$---,---</div>
-                    </div>
+                <!-- Footer Summary Line -->
+                <div class="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px] text-gray-400 font-sans">
+                    <span id="sb-news-status">탐욕·공포: 71pt 탐욕</span>
+                    <span class="text-indigo-400 font-mono">Post-Only Limit Maker Strategy</span>
                 </div>
             </div>
 
         </section>
     </main>
 
-    <!-- 2-TAB TRADE HISTORY & ARCHIVE SECTION -->
-    <section class="mt-3 hud-card rounded-2xl p-3 sm:p-4 border border-gray-800">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-800/80 gap-2.5">
-            <!-- Tab Buttons -->
-            <div class="flex items-center space-x-2">
-                <button id="tab-btn-live-trades" onclick="switchTradeTab('live')" 
-                        class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center space-x-1.5 transition">
-                    <span>⚡</span>
-                    <span>실시간 가상 매매 장부</span>
-                    <span id="badge-live-trades-count" class="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-[10px] font-mono">5건</span>
-                </button>
-                <button id="tab-btn-legend-trades" onclick="switchTradeTab('legend')" 
-                        class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1.5 transition">
-                    <span>🕰️</span>
-                    <span>전설의 실거래 복기 타임머신</span>
-                    <span class="ml-1 px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono">TOP 5</span>
-                </button>
-            </div>
-            <!-- Summary Stats Pill Bar -->
-            <div id="trades-summary-bar" class="flex items-center space-x-2 text-xs font-mono flex-wrap gap-y-1">
-                <span class="px-2 py-0.5 rounded bg-gray-900 border border-gray-800 text-gray-300">총 전적: <strong id="sum-winrate" class="text-emerald-400">80.0% (4승 1패)</strong></span>
-                <span class="px-2 py-0.5 rounded bg-gray-900 border border-gray-800 text-gray-300">누적 손익: <strong id="sum-pnl" class="text-emerald-400">+0.0064 BTC</strong></span>
-                <span class="px-2 py-0.5 rounded bg-gray-900 border border-gray-800 text-gray-300">메이커 환급: <strong id="sum-rebate" class="text-sky-400">+0.0016 BTC</strong></span>
-            </div>
-        </div>
+    <!-- Hidden Elements to preserve backwards-compatible JS binds -->
+    <div class="hidden">
+        <span id="wonyo-level-badge"></span>
+        <span id="wonyo-virtual-seed"></span>
+        <span id="mascot-badge"></span>
+        <img id="wonyo-mascot-img" />
+        <div id="mascot-aura"></div>
+        <div id="verdict-card"></div>
+        <div id="verdict-text"></div>
+        <div id="verdict-icon"></div>
+        <div id="verdict-confidence"></div>
+        <div id="playbook-text"></div>
+        <div id="verdict-subtext"></div>
+        <div id="meter-score-text"></div>
+        <div id="meter-bull-bar"></div>
+        <div id="meter-bear-bar"></div>
+        <div id="vol-badge"></div>
+        <div id="vol-desc"></div>
+        <div id="ext-badge"></div>
+        <div id="ext-desc"></div>
+        <div id="news-badge"></div>
+        <div id="news-desc"></div>
+        <div id="val-fng"></div>
+        <div id="val-attention"></div>
+        <div id="val-news-conf"></div>
+        <div id="news-engine-tag"></div>
+        <div id="bar-bull-abs"></div>
+        <div id="bar-bear-abs"></div>
+        <div id="sb-vol-status"></div>
+        <div id="sb-ext-status"></div>
+        <div id="sb-news-ticker"></div>
+        <div id="ladder-1-px"></div>
+        <div id="ladder-2-px"></div>
+        <div id="ladder-3-px"></div>
+        <div id="ladder-1-qty"></div>
+        <div id="ladder-2-qty"></div>
+        <div id="ladder-3-qty"></div>
+        <div id="sum-rebate"></div>
+    </div>
 
-        <!-- Tab 1: Live Trades Table -->
-        <div id="tab-content-live" class="mt-2.5 overflow-x-auto">
-            <table class="w-full text-left text-xs font-mono min-w-[680px]">
-                <thead>
-                    <tr class="text-gray-400 border-b border-gray-800/80 pb-2">
-                        <th class="py-2 px-1">시간 (KST)</th>
-                        <th class="py-2 px-1">포지션</th>
-                        <th class="py-2 px-1">진입가</th>
-                        <th class="py-2 px-1">청산가</th>
-                        <th class="py-2 px-1">종료 사유</th>
-                        <th class="py-2 px-1">손익률</th>
-                        <th class="py-2 px-1">실현 손익</th>
-                        <th class="py-2 px-1">수수료 환급</th>
-                        <th class="py-2 px-1">보유 시간</th>
-                    </tr>
-                </thead>
-                <tbody id="live-trades-tbody" class="divide-y divide-gray-800/40 text-gray-200">
-                    <!-- Populated by JS -->
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Tab 2: Legendary Trades Table -->
-        <div id="tab-content-legend" class="mt-2.5 overflow-x-auto hidden">
-            <table class="w-full text-left text-xs min-w-[780px]">
-                <thead>
-                    <tr class="text-gray-400 border-b border-gray-800/80 pb-2 font-mono">
-                        <th class="py-2 px-1 w-12 text-center">순위</th>
-                        <th class="py-2 px-1">사건 및 매매 타이틀</th>
-                        <th class="py-2 px-1">체결 일시 (KST)</th>
-                        <th class="py-2 px-1">방향</th>
-                        <th class="py-2 px-1">진입 ➔ 청산가</th>
-                        <th class="py-2 px-1 font-mono">수익률</th>
-                        <th class="py-2 px-1 font-mono">실현 손익</th>
-                        <th class="py-2 px-1">매매 복기 핵심 요약</th>
-                        <th class="py-2 px-1 text-center">차트 점프</th>
-                    </tr>
-                </thead>
-                <tbody id="legend-trades-tbody" class="divide-y divide-gray-800/40 text-gray-200">
-                    <!-- Populated by JS -->
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- Client-Side App Logic -->
+    <!-- JAVASCRIPT APPLICATION CORE -->
     <script>
         let currentMode = 'live';
         let currentInterval = '15m';
@@ -586,18 +482,12 @@
         let candleSeries = null;
         let volumeSeries = null;
 
-        // --- Wonyotti Brutal Truth Quotes (팩폭 멘토 명언 모음) ---
         const WONYO_QUOTES = [
-            "거래량도 없는데 손가락 근질거리죠? 지금 들어가면 시드만 녹습니다. 뇌동매매 멈추고 산책이나 다녀오세요.",
-            "돈을 벌려고 하지 말고, 잃지 않으려고 하세요. 잃지만 않으면 기회는 매일 옵니다.",
-            "캔들과 거래량만 보면 됩니다. 보조지표 잔뜩 띄워놓고 고민해봤자 한 박자 늦을 뿐입니다.",
-            "손절은 -1% 이내에서 찰나에 끝내야 합니다. 물렸다고 존버하는 순간 시드는 가루가 됩니다.",
-            "방향이 맞았을 때 길게 끌고 가지 마세요. 제 매매 평균 보유 시간은 16분입니다.",
+            "거래량 터지기 전까진 억지로 매매 자리 만들지 마세요. 뇌동매매 멈추고 산책이나 다녀오세요.",
+            "손절은 짧게 끊고, 익절은 분할로 욕심내지 말고 챙기세요. 시장은 내일도 열립니다.",
             "시드가 커질수록 레버리지는 낮춰야 합니다. 100억 넘어가면 1.5배도 무겁습니다.",
             "남들이 공포에 질려 던질 때 침착하게 받치고, 환호할 때 슬그머니 지정가로 털고 나오는 게 전부입니다.",
-            "수수료 아까운 줄 모르면 선물 매매 접으세요. 메이커 리베이트 환급만 챙겨도 밥값 나옵니다.",
-            "차트가 안 보이면 모니터를 끄세요. 억지로 매매 자리 만들지 마세요.",
-            "어차피 시장은 내일도 열립니다. 하루 쉬어간다고 뒤처지지 않습니다."
+            "수수료 아까운 줄 모르면 선물 매매 접으세요. 메이커 리베이트 환급만 챙겨도 밥값 나옵니다."
         ];
         let wonyoQuoteIdx = 0;
 
@@ -621,23 +511,16 @@
             const contLegend = document.getElementById('tab-content-legend');
 
             if (tab === 'live') {
-                if (btnLive) btnLive.className = 'px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center space-x-1.5 transition';
-                if (btnLegend) btnLegend.className = 'px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1.5 transition';
+                if (btnLive) btnLive.className = 'px-2.5 py-1 rounded-lg font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center space-x-1';
+                if (btnLegend) btnLegend.className = 'px-2.5 py-1 rounded-lg font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1';
                 if (contLive) contLive.classList.remove('hidden');
                 if (contLegend) contLegend.classList.add('hidden');
             } else {
-                if (btnLegend) btnLegend.className = 'px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center space-x-1.5 transition';
-                if (btnLive) btnLive.className = 'px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1.5 transition';
+                if (btnLegend) btnLegend.className = 'px-2.5 py-1 rounded-lg font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center space-x-1';
+                if (btnLive) btnLive.className = 'px-2.5 py-1 rounded-lg font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1';
                 if (contLegend) contLegend.classList.remove('hidden');
                 if (contLive) contLive.classList.add('hidden');
             }
-        }
-
-        // --- Legendary Trade Replay Jump ---
-        function replayLegendaryTrade(title, timestamp) {
-            setMode('replay');
-            alert(`[워뇨띠 실거래 복기 모드]\n사건: ${title}\n당시 일시: ${timestamp}\n\n차트가 2021년 폭락장 리플레이 모드로 전환되었습니다. 당시 거래량 흡수 캔들과 오더플로우를 확인하세요.`);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // --- Load Trades Ledger from /api/trades ---
@@ -650,161 +533,77 @@
                 // 1. Live Trades Tbody
                 const liveTbody = document.getElementById('live-trades-tbody');
                 if (liveTbody && Array.isArray(data.live_trades)) {
-                    liveTbody.innerHTML = data.live_trades.map(t => {
+                    liveTbody.innerHTML = data.live_trades.slice(0, 5).map(t => {
                         const side = (t.side || t.direction || 'LONG').toUpperCase();
-                        const time = t.timestamp_kst || t.time_kst || '--';
+                        const time = (t.timestamp_kst || t.time_kst || '--').split(' ')[1] || t.timestamp_kst;
                         const leverage = t.leverage || (side === 'LONG' ? 1.85 : 1.50);
-                        const holdingTime = t.holding_time || (t.hold_duration_min ? `${t.hold_duration_min}분` : '--');
-                        const pnlBtc = t.pnl_btc ?? 0;
                         const pnlPct = t.pnl_pct ?? 0;
-                        const isProfit = pnlBtc >= 0;
-                        const rebateBtc = t.maker_rebate_btc ?? 0.0003;
+                        const isProfit = pnlPct >= 0;
                         const entryPx = (t.entry_price || 0).toLocaleString();
-                        const exitPx = (t.exit_price || 0).toLocaleString();
                         const exitReason = t.exit_reason || '--';
 
                         const posColor = side === 'LONG' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
                         const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
                         return `
                             <tr class="hover:bg-gray-800/40 transition">
-                                <td class="py-2.5 px-1 text-gray-400">${time}</td>
-                                <td class="py-2.5 px-1">
-                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold border ${posColor}">
+                                <td class="py-1.5 px-1 text-gray-400">${time}</td>
+                                <td class="py-1.5 px-1">
+                                    <span class="px-1.5 py-0.2 rounded text-[10px] font-bold border ${posColor}">
                                         ${side} ${leverage}x
                                     </span>
                                 </td>
-                                <td class="py-2.5 px-1 font-mono text-gray-300">$${entryPx}</td>
-                                <td class="py-2.5 px-1 font-mono text-gray-300">$${exitPx}</td>
-                                <td class="py-2.5 px-1 text-gray-300">${exitReason}</td>
-                                <td class="py-2.5 px-1 font-bold ${pnlColor}">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%</td>
-                                <td class="py-2.5 px-1 font-bold ${pnlColor}">${pnlBtc >= 0 ? '+' : ''}${pnlBtc.toFixed(4)} BTC</td>
-                                <td class="py-2.5 px-1 text-sky-400 font-mono">+${rebateBtc.toFixed(4)} BTC</td>
-                                <td class="py-2.5 px-1 text-gray-400">${holdingTime}</td>
+                                <td class="py-1.5 px-1 font-mono text-gray-300">$${entryPx}</td>
+                                <td class="py-1.5 px-1 text-gray-300 truncate max-w-[100px]">${exitReason}</td>
+                                <td class="py-1.5 px-1 font-bold ${pnlColor}">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%</td>
                             </tr>
                         `;
                     }).join('');
                 }
 
-                // Summary Pill Bar
+                // 2. Legendary Trades Tbody
+                const legendTbody = document.getElementById('legend-trades-tbody');
+                if (legendTbody && Array.isArray(data.legendary_trades)) {
+                    legendTbody.innerHTML = data.legendary_trades.slice(0, 5).map(t => {
+                        const isProfit = (t.pnl_btc ?? 0) >= 0;
+                        const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
+                        return `
+                            <tr class="hover:bg-gray-800/40 transition">
+                                <td class="py-1.5 px-1 text-gray-400">${t.timestamp}</td>
+                                <td class="py-1.5 px-1 font-bold text-gray-200">${t.title}</td>
+                                <td class="py-1.5 px-1 text-cyan-400">${t.action}</td>
+                                <td class="py-1.5 px-1 font-bold ${pnlColor}">${t.pnl_btc >= 0 ? '+' : ''}${t.pnl_btc} BTC</td>
+                                <td class="py-1.5 px-1 text-right">
+                                    <button onclick="setMode('replay')" class="px-1.5 py-0.5 rounded bg-gray-800 text-[10px] text-amber-300 border border-gray-700 hover:border-amber-400">보기</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
                 if (data.summary) {
                     const s = data.summary;
                     const badgeCount = document.getElementById('badge-live-trades-count');
                     const sumWinrate = document.getElementById('sum-winrate');
                     const sumPnl = document.getElementById('sum-pnl');
-                    const sumRebate = document.getElementById('sum-rebate');
-
-                    const totalCount = s.total_trades ?? (data.live_trades ? data.live_trades.length : 0);
-                    const wins = s.wins ?? s.win_trades ?? 0;
-                    const losses = s.losses ?? s.loss_trades ?? 0;
-                    const winRate = s.win_rate_pct ?? (totalCount > 0 ? ((wins / totalCount) * 100).toFixed(1) : 0);
-                    const netPnl = s.net_pnl_btc ?? s.total_pnl_btc ?? 0;
-                    const totalRebate = s.total_rebate_btc ?? s.total_rebates_btc ?? 0;
-
-                    if (badgeCount) badgeCount.textContent = `${totalCount}건`;
-                    if (sumWinrate) sumWinrate.textContent = `${winRate}% (${wins}승 ${losses}패)`;
-                    if (sumPnl) {
-                        sumPnl.textContent = `${netPnl >= 0 ? '+' : ''}${netPnl.toFixed(4)} BTC`;
-                        sumPnl.className = `font-bold ${netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-                    }
-                    if (sumRebate) sumRebate.textContent = `+${totalRebate.toFixed(4)} BTC`;
-
-                    // Update Top Wonyo Seed & Level if elements exist
-                    const seedEl = document.getElementById('wonyo-virtual-seed');
-                    const lvlEl = document.getElementById('wonyo-level-badge');
-                    if (seedEl && s.current_seed_btc) {
-                        const retSign = (s.return_pct || 0) >= 0 ? '+' : '';
-                        seedEl.textContent = `가상 시드 ${s.current_seed_btc} BTC (${retSign}${s.return_pct}%)`;
-                    }
-                    if (lvlEl && s.wonyo_title) {
-                        lvlEl.textContent = s.wonyo_title;
-                    }
+                    if (badgeCount) badgeCount.textContent = `${data.live_trades ? data.live_trades.length : 5}건`;
+                    if (sumWinrate && s.win_rate_pct) sumWinrate.textContent = `${s.win_rate_pct.toFixed(1)}%`;
+                    if (sumPnl && s.net_pnl_btc) sumPnl.textContent = `${s.net_pnl_btc >= 0 ? '+' : ''}${s.net_pnl_btc.toFixed(1)} BTC`;
                 }
-
-                // 2. Legendary Trades Tbody
-                const legTbody = document.getElementById('legend-trades-tbody');
-                if (legTbody && Array.isArray(data.legendary_trades)) {
-                    legTbody.innerHTML = data.legendary_trades.map(lt => {
-                        const side = (lt.side || lt.direction || 'LONG').toUpperCase();
-                        const time = lt.timestamp_kst || lt.date_kst || '--';
-                        const lesson = lt.lesson || lt.description || '--';
-                        const pnlPct = lt.pnl_pct ?? 0;
-                        const pnlBtc = lt.pnl_btc ?? 0;
-                        const entryPx = (lt.entry_price || 0).toLocaleString();
-                        const exitPx = (lt.exit_price || 0).toLocaleString();
-
-                        const posBadge = side === 'LONG' 
-                            ? '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">LONG</span>'
-                            : '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">SHORT</span>';
-                        return `
-                            <tr class="hover:bg-gray-800/40 transition">
-                                <td class="py-2.5 px-1 text-center font-bold text-amber-400">#${lt.rank}</td>
-                                <td class="py-2.5 px-1 font-bold text-white">${lt.title}</td>
-                                <td class="py-2.5 px-1 text-gray-400 font-mono">${time}</td>
-                                <td class="py-2.5 px-1">${posBadge}</td>
-                                <td class="py-2.5 px-1 font-mono text-gray-300">$${entryPx} ➔ $${exitPx}</td>
-                                <td class="py-2.5 px-1 font-bold font-mono text-emerald-400">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%</td>
-                                <td class="py-2.5 px-1 font-bold font-mono text-emerald-400">${pnlBtc >= 0 ? '+' : ''}${pnlBtc.toFixed(1)} BTC</td>
-                                <td class="py-2.5 px-1 text-gray-300 text-xs">${lesson}</td>
-                                <td class="py-2.5 px-1 text-center">
-                                    <button onclick="replayLegendaryTrade('${lt.title}', '${time}')" 
-                                            class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/40 text-[11px] font-bold transition">
-                                        🔍 복기 점프
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    }).join('');
-                }
-            } catch (err) {
-                console.error("Load trades error:", err);
+            } catch (e) {
+                console.error("Trades ledger error:", e);
             }
         }
 
-        function setSensitivity(sens) {
-            currentSensitivity = sens;
-            const btnStd = document.getElementById('btn-sens-standard');
-            const btnAct = document.getElementById('btn-sens-active');
-            if (sens === 'active') {
-                if (btnAct) {
-                    btnAct.className = 'sens-btn px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-amber-500 text-black shadow-sm font-black transition';
-                }
-                if (btnStd) {
-                    btnStd.className = 'sens-btn px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-gray-400 hover:text-white transition';
-                }
-            } else {
-                if (btnStd) {
-                    btnStd.className = 'sens-btn px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg bg-emerald-600 text-white shadow-sm font-black transition';
-                }
-                if (btnAct) {
-                    btnAct.className = 'sens-btn px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg text-gray-400 hover:text-white transition';
-                }
-            }
-            loadData();
-        }
-
+        // --- Chart Initialization ---
         function initChart() {
             const container = document.getElementById('chart-container');
-            container.innerHTML = '';
+            if (!container) return;
 
             chart = LightweightCharts.createChart(container, {
-                width: container.clientWidth,
-                height: container.clientHeight || 480,
                 layout: {
-                    background: { color: '#06080e' },
+                    background: { color: '#090d16' },
                     textColor: '#9ca3af',
-                },
-                localization: {
-                    locale: 'ko-KR',
-                    dateFormat: 'yyyy-MM-dd',
-                    timeFormatter: (timestamp) => {
-                        const d = new Date(timestamp * 1000);
-                        const y = d.getUTCFullYear();
-                        const m = String(d.getUTCMonth() + 1).padStart(2, '0');
-                        const day = String(d.getUTCDate()).padStart(2, '0');
-                        const h = String(d.getUTCHours()).padStart(2, '0');
-                        const min = String(d.getUTCMinutes()).padStart(2, '0');
-                        return `${y}-${m}-${day} ${h}:${min} KST`;
-                    }
+                    fontFamily: "'JetBrains Mono', monospace"
                 },
                 grid: {
                     vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
@@ -823,114 +622,87 @@
                 },
             });
 
-            // Defensive creation for v4 and v5
-            if (typeof chart.addCandlestickSeries === 'function') {
-                candleSeries = chart.addCandlestickSeries({
-                    upColor: '#00ff88',
-                    downColor: '#ff3366',
-                    borderVisible: false,
-                    wickUpColor: '#00ff88',
-                    wickDownColor: '#ff3366',
-                });
-                volumeSeries = chart.addHistogramSeries({
-                    color: '#38bdf8',
-                    priceFormat: { type: 'volume' },
-                    priceScaleId: '',
-                });
-            } else if (LightweightCharts.CandlestickSeries) {
-                candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
-                    upColor: '#00ff88',
-                    downColor: '#ff3366',
-                    borderVisible: false,
-                    wickUpColor: '#00ff88',
-                    wickDownColor: '#ff3366',
-                });
-                volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
-                    color: '#38bdf8',
-                    priceFormat: { type: 'volume' },
-                    priceScaleId: '',
-                });
-            }
-
-            volumeSeries.priceScale().applyOptions({
-                scaleMargins: { top: 0.82, bottom: 0 },
+            candleSeries = chart.addCandlestickSeries({
+                upColor: '#10b981',
+                downColor: '#f43f5e',
+                borderUpColor: '#10b981',
+                borderDownColor: '#f43f5e',
+                wickUpColor: '#10b981',
+                wickDownColor: '#f43f5e',
             });
 
-            window.addEventListener('resize', () => {
-                if (chart && container) {
-                    chart.resize(container.clientWidth, container.clientHeight || 480);
-                }
+            volumeSeries = chart.addHistogramSeries({
+                color: '#26a69a',
+                priceFormat: { type: 'volume' },
+                priceScaleId: '',
+                scaleMargins: { top: 0.8, bottom: 0 },
             });
+
+            const resizeObserver = new ResizeObserver(entries => {
+                if (entries.length === 0 || !entries[0].contentRect) return;
+                const { width, height } = entries[0].contentRect;
+                chart.applyOptions({ width, height });
+            });
+            resizeObserver.observe(container);
         }
 
+        // --- Load Data from /api/predict & /api/candles ---
         async function loadData() {
             try {
-                // 1. Fetch Prediction first with sensitivity mode
-                const resP = await fetch(`/api/predict?mode=${currentMode}&interval=${currentInterval}&sensitivity=${currentSensitivity}`);
-                const dataP = await resP.json();
-                if (dataP.status === 'SUCCESS') {
-                    updateIntuitiveDashboard(dataP);
+                // 1. Fetch Prediction Signal
+                const predUrl = `/api/predict?mode=${currentMode}&interval=${currentInterval}&sensitivity=${currentSensitivity}`;
+                const resPred = await fetch(predUrl);
+                const dataPred = await resPred.json();
+
+                if (dataPred.status === 'SUCCESS') {
+                    updateIntuitiveDashboard(dataPred);
                 }
 
-                // 2. Fetch Candles & Volume
-                const resC = await fetch(`/api/candles?mode=${currentMode}&interval=${currentInterval}&limit=120`);
-                const dataC = await resC.json();
-                if (dataC.status === 'SUCCESS' && Array.isArray(dataC.candles)) {
+                // 2. Fetch Chart Candles
+                const cUrl = `/api/candles?mode=${currentMode}&interval=${currentInterval}&limit=100`;
+                const resCandles = await fetch(cUrl);
+                const dataCandles = await resCandles.json();
+
+                if (dataCandles.status === 'SUCCESS' && candleSeries && volumeSeries) {
                     const cData = [];
                     const vData = [];
                     const markers = [];
-                    const seenTimes = new Set();
 
-                    const sortedCandles = [...dataC.candles].sort((a, b) => a.time - b.time);
-                    const KST_OFFSET = 9 * 3600; // 한국 표준시(KST, UTC+9) 9시간 오프셋 적용
+                    dataCandles.candles.forEach(c => {
+                        const kstTime = c.time + 32400; // +9h KST
+                        cData.push({ time: kstTime, open: c.open, high: c.high, low: c.low, close: c.close });
+                        vData.push({
+                            time: kstTime,
+                            value: c.volume,
+                            color: c.close >= c.open ? 'rgba(16, 185, 129, 0.5)' : 'rgba(244, 63, 94, 0.5)'
+                        });
 
-                    sortedCandles.forEach(c => {
-                        const kstTime = c.time + KST_OFFSET;
-                        if (!seenTimes.has(kstTime)) {
-                            seenTimes.add(kstTime);
-                            cData.push({
+                        if (c.bull_abs > 1.2) {
+                            markers.push({
                                 time: kstTime,
-                                open: c.open,
-                                high: c.high,
-                                low: c.low,
-                                close: c.close
+                                position: 'belowBar',
+                                color: '#10b981',
+                                shape: 'arrowUp',
+                                text: '매수흡수'
                             });
-                            vData.push({
+                        } else if (c.bear_abs > 1.2) {
+                            markers.push({
                                 time: kstTime,
-                                value: c.volume,
-                                color: c.close >= c.open ? 'rgba(0, 255, 136, 0.4)' : 'rgba(255, 51, 102, 0.4)'
+                                position: 'aboveBar',
+                                color: '#f43f5e',
+                                shape: 'arrowDown',
+                                text: '매도저항'
                             });
-
-                            // Highlight Absorption markers
-                            if (c.bull_abs > 1.8 && c.vol_zscore > 1.2) {
-                                markers.push({
-                                    time: kstTime,
-                                    position: 'belowBar',
-                                    color: '#00ff88',
-                                    shape: 'arrowUp',
-                                    text: '매수 흡수'
-                                });
-                            } else if (c.bear_abs > 1.8 && c.vol_zscore > 1.2) {
-                                markers.push({
-                                    time: kstTime,
-                                    position: 'aboveBar',
-                                    color: '#ff3366',
-                                    shape: 'arrowDown',
-                                    text: '매도 흡수'
-                                });
-                            }
                         }
                     });
 
-                    if (candleSeries && cData.length > 0) {
-                        candleSeries.setData(cData);
-                        volumeSeries.setData(vData);
-                        candleSeries.setMarkers(markers);
-                        chart.timeScale().fitContent();
-                    }
+                    candleSeries.setData(cData);
+                    volumeSeries.setData(vData);
+                    candleSeries.setMarkers(markers);
+                    chart.timeScale().fitContent();
                 }
 
-                // 3. Fetch Trade History & Legendary Ledger
+                // 3. Fetch Trades
                 await loadTrades();
 
                 const badge = document.getElementById('last-updated-badge');
@@ -939,72 +711,26 @@
                     const kstHours = String(d.getHours()).padStart(2, '0');
                     const kstMins = String(d.getMinutes()).padStart(2, '0');
                     const kstSecs = String(d.getSeconds()).padStart(2, '0');
-                    badge.textContent = `• 갱신 ${kstHours}:${kstMins}:${kstSecs} KST`;
+                    badge.textContent = `• ${kstHours}:${kstMins}:${kstSecs} KST`;
                 }
             } catch (err) {
                 console.error("Load data error:", err);
             }
         }
 
-        let newsHeadlines = [];
-        let currentHeadlineIdx = 0;
-        let tickerInterval = null;
-
-        function updateNewsTicker(headlines, fngScore, fngLabel) {
-            newsHeadlines = (headlines && headlines.length > 0) ? headlines : [];
-            const tickerEl = document.getElementById('sb-news-ticker');
-            if (!tickerEl) return;
-
-            if (newsHeadlines.length === 0) {
-                tickerEl.innerHTML = `<span class="text-amber-400 font-bold">[공포탐욕지수 ${fngScore}pt (${fngLabel})]</span> 시장 심리 관망세 유지 중 • 주요 외신 속보 수신 대기`;
-                return;
-            }
-
-            const renderHeadline = () => {
-                if (newsHeadlines.length === 0) return;
-                const item = newsHeadlines[currentHeadlineIdx % newsHeadlines.length];
-                const sentTag = item.is_bullish 
-                    ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px] mr-1.5">호재</span>' 
-                    : item.is_bearish 
-                    ? '<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold text-[10px] mr-1.5">악재</span>'
-                    : '<span class="px-1.5 py-0.5 rounded bg-gray-700/60 text-gray-300 font-bold text-[10px] mr-1.5">속보</span>';
-
-                tickerEl.style.opacity = '0';
-                tickerEl.style.transition = 'opacity 0.25s ease';
-                setTimeout(() => {
-                    tickerEl.innerHTML = `
-                        ${sentTag}
-                        <span class="text-gray-400 font-mono text-[11px]">[${item.source}]</span> 
-                        <a href="${item.link}" target="_blank" class="hover:text-emerald-400 hover:underline transition ml-1 text-gray-200">${item.title}</a>
-                    `;
-                    tickerEl.style.opacity = '1';
-                }, 250);
-                currentHeadlineIdx++;
-            };
-
-            if (!tickerInterval) {
-                renderHeadline();
-                tickerInterval = setInterval(renderHeadline, 3500);
-            }
-        }
-
+        // --- Update UI with API response ---
         function updateIntuitiveDashboard(data) {
             const curPx = data.current_price;
             const iv = data.intuitive_verdict;
             const pred = data.prediction;
             const wonyo = data.wonyo_intuition;
             const risk = data.risk_matrix;
-            const vf = iv.volume_factor;
-            const ef = iv.external_factor;
-            const nf = iv.news_factor;
             const plan = pred.order_plan;
 
             // Live Price
             document.getElementById('live-btc-price').textContent = `$${curPx.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}`;
 
-            // -------------------------------------------------------------
-            // PANEL 1: 지금 워뇨띠라면? (BUY / SELL / HOLD 3-Way Selector)
-            // -------------------------------------------------------------
+            // 1. MASTER SIGNAL BOARD
             const btnBuy = document.getElementById('state-buy-btn');
             const btnSell = document.getElementById('state-sell-btn');
             const btnHold = document.getElementById('state-hold-btn');
@@ -1016,88 +742,47 @@
             const panelDecision = document.getElementById('panel-wonyo-decision');
 
             if (btnBuy && btnSell && btnHold) {
-                // Reset styles
-                btnBuy.className = 'p-2 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
-                btnSell.className = 'p-2 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
-                btnHold.className = 'p-2 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
-                panelDecision.classList.remove('border-emerald-500/50', 'border-rose-500/50', 'border-gray-800');
-
-                const mascotImg = document.getElementById('wonyo-mascot-img');
-                const mascotAura = document.getElementById('mascot-aura');
-                const mascotBadge = document.getElementById('mascot-badge');
+                btnBuy.className = 'p-1.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
+                btnSell.className = 'p-1.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
+                btnHold.className = 'p-1.5 rounded-xl border border-gray-800 bg-black/40 transition-all flex flex-col items-center opacity-40';
+                panelDecision.classList.remove('glow-up', 'glow-down', 'glow-neutral');
 
                 if (iv.verdict_color === 'green') {
-                    if (mascotImg) mascotImg.src = '/assets/mascot/bull.jpg';
-                    if (mascotAura) mascotAura.className = 'absolute -inset-1 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 opacity-60 blur-md transition-all duration-500';
-                    if (mascotBadge) {
-                        mascotBadge.innerHTML = '🔥 가즈아';
-                        mascotBadge.className = 'absolute -bottom-1 -right-1 text-[9px] font-black px-1.5 py-0.2 rounded-md bg-gray-900 border border-emerald-500 text-emerald-400';
-                    }
-                    if (mascotImg) mascotImg.className = 'relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-emerald-400 shadow-lg shadow-emerald-500/30 transition-all duration-300';
-
-                    btnBuy.className = 'p-2 rounded-xl border-2 border-emerald-400 bg-emerald-950/40 shadow-lg shadow-emerald-500/20 transition-all flex flex-col items-center scale-105';
-                    btnBuy.querySelector('.font-black').className = 'text-xs font-black text-emerald-400 flex items-center space-x-1';
-                    btnBuy.querySelector('span:last-child').className = 'text-[10px] text-emerald-300 font-bold mt-0.5';
-
+                    btnBuy.className = 'p-1.5 rounded-xl border-2 border-emerald-400 bg-emerald-950/40 text-emerald-400 shadow-md shadow-emerald-500/20 transition-all flex flex-col items-center scale-105';
+                    btnBuy.querySelector('.font-black').className = 'font-black text-emerald-400';
                     decIcon.textContent = '🚀';
                     decHeadline.textContent = '적극 매수 (BUY / LONG)';
-                    decHeadline.className = 'text-xs sm:text-sm font-black text-emerald-400';
+                    decHeadline.className = 'text-lg sm:text-xl font-black text-emerald-400 tracking-tight';
                     decActionTag.textContent = '지정가 롱 진입';
-                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                    decActionTag.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
                     decDetail.textContent = iv.playbook_text || '바닥에서 던진 물량을 고래가 다 받아먹었음! 3단 분할로 조용히 롱 탑승 🚀';
                     wonyoWinrate.textContent = '워뇨띠 기대 승률 74.5%';
-                    wonyoWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
-                    panelDecision.classList.add('border-emerald-500/50');
+                    wonyoWinrate.className = 'text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
+                    panelDecision.classList.add('glow-up');
                 } else if (iv.verdict_color === 'red') {
-                    if (mascotImg) mascotImg.src = '/assets/mascot/bear.jpg';
-                    if (mascotAura) mascotAura.className = 'absolute -inset-1 rounded-2xl bg-gradient-to-tr from-rose-500 to-red-600 opacity-60 blur-md transition-all duration-500';
-                    if (mascotBadge) {
-                        mascotBadge.innerHTML = '🛡️ 방어/숏';
-                        mascotBadge.className = 'absolute -bottom-1 -right-1 text-[9px] font-black px-1.5 py-0.2 rounded-md bg-gray-900 border border-rose-500 text-rose-400';
-                    }
-                    if (mascotImg) mascotImg.className = 'relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-rose-500 shadow-lg shadow-rose-500/30 transition-all duration-300';
-
-                    btnSell.className = 'p-2 rounded-xl border-2 border-rose-500 bg-rose-950/40 shadow-lg shadow-rose-500/20 transition-all flex flex-col items-center scale-105';
-                    btnSell.querySelector('.font-black').className = 'text-xs font-black text-rose-400 flex items-center space-x-1';
-                    btnSell.querySelector('span:last-child').className = 'text-[10px] text-rose-300 font-bold mt-0.5';
-
+                    btnSell.className = 'p-1.5 rounded-xl border-2 border-rose-500 bg-rose-950/40 text-rose-400 shadow-md shadow-rose-500/20 transition-all flex flex-col items-center scale-105';
+                    btnSell.querySelector('.font-black').className = 'font-black text-rose-400';
                     decIcon.textContent = '🔻';
                     decHeadline.textContent = '적극 매도/숏 (SELL / SHORT)';
-                    decHeadline.className = 'text-xs sm:text-sm font-black text-rose-400';
+                    decHeadline.className = 'text-lg sm:text-xl font-black text-rose-400 tracking-tight';
                     decActionTag.textContent = '지정가 숏/현금화';
-                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30';
+                    decActionTag.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30';
                     decDetail.textContent = iv.playbook_text || '고점에서 대량 매도벽에 부딪힘! 반등 기대 말고 숏 노리거나 현금 챙겨라 🛡️';
                     wonyoWinrate.textContent = '하락 압력 우세 (72.0%)';
-                    wonyoWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400';
-                    panelDecision.classList.add('border-rose-500/50');
+                    wonyoWinrate.className = 'text-xs font-bold px-2.5 py-0.5 rounded bg-rose-500/20 text-rose-400';
+                    panelDecision.classList.add('glow-down');
                 } else {
-                    if (mascotImg) mascotImg.src = '/assets/mascot/hold.jpg';
-                    if (mascotAura) mascotAura.className = 'absolute -inset-1 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-600 opacity-40 blur-sm transition-all duration-500';
-                    if (mascotBadge) {
-                        mascotBadge.innerHTML = '😴 꿀잠';
-                        mascotBadge.className = 'absolute -bottom-1 -right-1 text-[9px] font-black px-1.5 py-0.2 rounded-md bg-gray-900 border border-amber-500 text-amber-400';
-                    }
-                    if (mascotImg) mascotImg.className = 'relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-amber-500/60 shadow-md shadow-amber-500/20 transition-all duration-300';
-
-                    btnHold.className = 'p-2 rounded-xl border-2 border-amber-400/80 bg-amber-950/30 shadow-lg shadow-amber-500/20 transition-all flex flex-col items-center scale-105';
-                    btnHold.querySelector('.font-black').className = 'text-xs font-black text-amber-400 flex items-center space-x-1';
-                    btnHold.querySelector('span:last-child').className = 'text-[10px] text-amber-300 font-bold mt-0.5';
-
+                    btnHold.className = 'p-1.5 rounded-xl border-2 border-amber-400/80 bg-amber-950/30 text-amber-400 shadow-md shadow-amber-500/20 transition-all flex flex-col items-center scale-105';
+                    btnHold.querySelector('.font-black').className = 'font-black text-amber-400';
                     decIcon.textContent = '⏸️';
                     decHeadline.textContent = '관망 및 현금 대기 (HOLD)';
-                    decHeadline.className = 'text-xs sm:text-sm font-black text-gray-200';
+                    decHeadline.className = 'text-lg sm:text-xl font-black text-gray-200 tracking-tight';
                     decActionTag.textContent = '뇌동매매 금지';
-                    decActionTag.className = 'text-[10px] font-bold px-1.5 py-0.2 rounded bg-gray-800 text-gray-300 border border-gray-700';
+                    decActionTag.className = 'text-[11px] font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-300 border border-gray-700';
                     decDetail.textContent = iv.playbook_text || '거래량 안 터질 땐 무리하게 진입 안 하고 현금 들고 꿀잠 자는 게 돈 버는 거임 ☕';
                     wonyoWinrate.textContent = '변곡점 대기 (관망)';
-                    wonyoWinrate.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-400';
-                    panelDecision.classList.add('border-gray-800');
-                }
-
-                document.getElementById('sb-vol-status').textContent = vf.badge.replace(/^.*? /, '');
-                document.getElementById('sb-ext-status').textContent = ef.badge.replace(/^.*? /, '');
-                if (nf) {
-                    document.getElementById('sb-news-status').textContent = `${nf.fear_greed_label} ${nf.fear_greed_score}pt`;
+                    wonyoWinrate.className = 'text-xs font-bold px-2.5 py-0.5 rounded bg-gray-800 text-gray-400';
+                    panelDecision.classList.add('glow-neutral');
                 }
 
                 // Update Signal Readiness Radar
@@ -1119,161 +804,113 @@
                 }
             }
 
-            // -------------------------------------------------------------
-            // PANEL 2: 만약 들어갔다면? (실전 포지션 & 투입 규모)
-            // -------------------------------------------------------------
+            // 2. ONNX NEURAL NETWORK PREDICTION
+            if (data.nn_prediction) {
+                const nn = data.nn_prediction;
+                const onnxLatency = document.getElementById('onnx-latency');
+                const onnxActionBadge = document.getElementById('onnx-action-badge');
+                const onnxConfText = document.getElementById('onnx-conf-text');
+                const onnxProbHold = document.getElementById('onnx-prob-hold');
+                const onnxProbLong = document.getElementById('onnx-prob-long');
+                const onnxProbShort = document.getElementById('onnx-prob-short');
+                const onnxProbClose = document.getElementById('onnx-prob-close');
+                const onnxBarHold = document.getElementById('onnx-bar-hold');
+                const onnxBarLong = document.getElementById('onnx-bar-long');
+                const onnxBarShort = document.getElementById('onnx-bar-short');
+                const onnxBarClose = document.getElementById('onnx-bar-close');
+
+                if (onnxLatency) onnxLatency.textContent = `${nn.latency_ms}ms`;
+                if (onnxConfText) onnxConfText.textContent = `${nn.confidence_pct}% / ${nn.size_multiplier}x`;
+
+                if (onnxActionBadge) {
+                    onnxActionBadge.textContent = nn.action;
+                    if (nn.action === 'BUY_LONG') {
+                        onnxActionBadge.className = 'px-2.5 py-0.5 rounded text-xs font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm shadow-emerald-500/30';
+                    } else if (nn.action === 'SELL_SHORT') {
+                        onnxActionBadge.className = 'px-2.5 py-0.5 rounded text-xs font-black bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-sm shadow-rose-500/30';
+                    } else if (nn.action === 'CLOSE') {
+                        onnxActionBadge.className = 'px-2.5 py-0.5 rounded text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/40';
+                    } else {
+                        onnxActionBadge.className = 'px-2.5 py-0.5 rounded text-xs font-black bg-gray-800 text-gray-300 border border-gray-700';
+                    }
+                }
+
+                if (nn.probabilities) {
+                    if (onnxProbHold) onnxProbHold.textContent = `${nn.probabilities.hold_pct}%`;
+                    if (onnxProbLong) onnxProbLong.textContent = `${nn.probabilities.long_pct}%`;
+                    if (onnxProbShort) onnxProbShort.textContent = `${nn.probabilities.short_pct}%`;
+                    if (onnxProbClose) onnxProbClose.textContent = `${nn.probabilities.close_pct}%`;
+
+                    if (onnxBarHold) onnxBarHold.style.width = `${nn.probabilities.hold_pct}%`;
+                    if (onnxBarLong) onnxBarLong.style.width = `${nn.probabilities.long_pct}%`;
+                    if (onnxBarShort) onnxBarShort.style.width = `${nn.probabilities.short_pct}%`;
+                    if (onnxBarClose) onnxBarClose.style.width = `${nn.probabilities.close_pct}%`;
+                }
+            }
+
+            // Institutional Micro-Risk Chips
+            document.getElementById('val-bull-abs').textContent = wonyo.bullish_absorption;
+            document.getElementById('val-bear-abs').textContent = wonyo.bearish_absorption;
+            document.getElementById('val-regime-risk').textContent = risk.regime_risk.status;
+            document.getElementById('val-kaufman').textContent = risk.market_efficiency.score;
+
+            // 3. ONE-STOP POSITION & EXECUTION CARD
             const posBadge = document.getElementById('pos-status-badge');
-            const posSideText = document.getElementById('pos-side-text');
-            const posLevText = document.getElementById('pos-leverage-text');
-            const posEntryPx = document.getElementById('pos-entry-price');
+            const posSide = document.getElementById('pos-side-text');
+            const posLev = document.getElementById('pos-leverage-text');
+            const posEntry = document.getElementById('pos-entry-price');
             const posSizeCont = document.getElementById('pos-size-contracts');
             const posSizeUsd = document.getElementById('pos-size-usd');
             const posLivePnl = document.getElementById('pos-live-pnl');
             const posPnlUsd = document.getElementById('pos-pnl-usd');
-            const posSlPx = document.getElementById('pos-sl-price');
-            const posTpPx = document.getElementById('pos-tp-price');
             const posHoldingTimer = document.getElementById('pos-holding-timer');
+            const posExitBadge = document.getElementById('pos-exit-rule-badge');
 
-            if (posBadge) {
-                if (iv.verdict_color === 'green') {
-                    posBadge.textContent = 'LONG 포지션 가동';
-                    posBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400';
-                    posSideText.textContent = '▲ LONG (매수)';
-                    posSideText.className = 'text-sm font-black text-emerald-400 mt-0.5';
-                    posLevText.textContent = `레버리지 ${plan.estimated_leverage || 1.85}x (Kelly)`;
-                    
-                    const entry = plan.target_limit_price || curPx;
-                    posEntryPx.textContent = `$${entry.toLocaleString()}`;
-                    
-                    const contracts = plan.target_contracts_usd || Math.round(curPx * 1.5);
-                    posSizeCont.textContent = `${contracts.toLocaleString()} 계약`;
-                    posSizeUsd.textContent = `($${contracts.toLocaleString()})`;
+            if (pred.action === 'BUY' || pred.action === 'SELL') {
+                const isBuy = pred.action === 'BUY';
+                posBadge.textContent = isBuy ? 'LONG 가상 포지션' : 'SHORT 가상 포지션';
+                posBadge.className = isBuy ? 'text-xs font-extrabold px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400' : 'text-xs font-extrabold px-2.5 py-0.5 rounded bg-rose-500/20 text-rose-400';
 
-                    const pnlPct = ((curPx - entry) / entry) * 100 * (plan.estimated_leverage || 1.85);
-                    const pnlUsd = (contracts * (pnlPct / 100));
-                    posLivePnl.textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`;
-                    posLivePnl.className = `text-sm font-black mono mt-0.5 ${pnlPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-                    posPnlUsd.textContent = `(${pnlUsd >= 0 ? '+' : ''}$${pnlUsd.toFixed(1)})`;
+                posSide.textContent = isBuy ? '▲ LONG' : '▼ SHORT';
+                posSide.className = isBuy ? 'text-xs sm:text-sm font-black text-emerald-400 mt-0.5' : 'text-xs sm:text-sm font-black text-rose-400 mt-0.5';
 
-                    posSlPx.textContent = plan.stop_loss_price > 0 ? `$${plan.stop_loss_price.toLocaleString()}` : '---';
-                    posTpPx.textContent = plan.take_profit_price > 0 ? `$${plan.take_profit_price.toLocaleString()}` : '---';
-                    posHoldingTimer.textContent = '16.35분 익절 타깃';
-                    posHoldingTimer.className = 'text-xs font-black mono text-emerald-400 mt-0.5';
-                } else if (iv.verdict_color === 'red') {
-                    posBadge.textContent = 'SHORT 포지션 가동';
-                    posBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400';
-                    posSideText.textContent = '▼ SHORT (매도)';
-                    posSideText.className = 'text-sm font-black text-rose-400 mt-0.5';
-                    posLevText.textContent = `레버리지 ${plan.estimated_leverage || 1.50}x (Kelly)`;
-                    
-                    const entry = plan.target_limit_price || curPx;
-                    posEntryPx.textContent = `$${entry.toLocaleString()}`;
-                    
-                    const contracts = plan.target_contracts_usd || Math.round(curPx * 1.2);
-                    posSizeCont.textContent = `${contracts.toLocaleString()} 계약`;
-                    posSizeUsd.textContent = `($${contracts.toLocaleString()})`;
+                posLev.textContent = `레버리지 ${plan.estimated_leverage.toFixed(2)}x`;
+                posEntry.textContent = `$${plan.target_limit_price.toLocaleString()}`;
+                posSizeCont.textContent = `${plan.target_contracts_usd.toLocaleString()} 계약`;
+                posSizeUsd.textContent = `($${plan.target_contracts_usd.toLocaleString()})`;
 
-                    const pnlPct = ((entry - curPx) / entry) * 100 * (plan.estimated_leverage || 1.50);
-                    const pnlUsd = (contracts * (pnlPct / 100));
-                    posLivePnl.textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`;
-                    posLivePnl.className = `text-sm font-black mono mt-0.5 ${pnlPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-                    posPnlUsd.textContent = `(${pnlUsd >= 0 ? '+' : ''}$${pnlUsd.toFixed(1)})`;
+                const diff = isBuy ? (curPx - plan.target_limit_price) : (plan.target_limit_price - curPx);
+                const pnlPct = (diff / plan.target_limit_price) * 100.0 * plan.estimated_leverage;
+                const pnlUsd = (pnlPct / 100.0) * (plan.target_contracts_usd / plan.estimated_leverage);
 
-                    posSlPx.textContent = plan.stop_loss_price > 0 ? `$${plan.stop_loss_price.toLocaleString()}` : '---';
-                    posTpPx.textContent = plan.take_profit_price > 0 ? `$${plan.take_profit_price.toLocaleString()}` : '---';
-                    posHoldingTimer.textContent = '16.35분 익절 타깃';
-                    posHoldingTimer.className = 'text-xs font-black mono text-rose-400 mt-0.5';
-                } else {
-                    posBadge.textContent = '무포지션 (현금 100%)';
-                    posBadge.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded bg-gray-800 text-gray-300';
-                    posSideText.textContent = '━ NO POSITION';
-                    posSideText.className = 'text-sm font-black text-gray-400 mt-0.5';
-                    posLevText.textContent = '레버리지 0.00x';
-                    
-                    posEntryPx.textContent = `$${curPx.toLocaleString()}`;
-                    posSizeCont.textContent = '0 계약 (현금 보유)';
-                    posSizeUsd.textContent = '($0.00)';
-                    posLivePnl.textContent = '0.00%';
-                    posLivePnl.className = 'text-sm font-black mono text-gray-400 mt-0.5';
-                    posPnlUsd.textContent = '($0.00)';
+                posLivePnl.textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%`;
+                posLivePnl.className = pnlPct >= 0 ? 'text-xs sm:text-sm font-black mono text-emerald-400 mt-0.5' : 'text-xs sm:text-sm font-black mono text-rose-400 mt-0.5';
+                posPnlUsd.textContent = `(${pnlUsd >= 0 ? '+' : ''}$${pnlUsd.toFixed(2)})`;
 
-                    posSlPx.textContent = '---';
-                    posTpPx.textContent = '---';
-                    posHoldingTimer.textContent = '변곡점 출현 대기';
-                    posHoldingTimer.className = 'text-xs font-black mono text-gray-400 mt-0.5';
-                }
-            }
-
-            // 1. MASTER VERDICT CARD
-            const vCard = document.getElementById('verdict-card');
-            const vText = document.getElementById('verdict-text');
-            const vIcon = document.getElementById('verdict-icon');
-            const vConf = document.getElementById('verdict-confidence');
-
-            vConf.textContent = `신뢰도: ${pred.confidence}%`;
-            vText.textContent = iv.verdict_badge;
-            document.getElementById('playbook-text').textContent = iv.playbook_text;
-
-            vCard.classList.remove('glow-up', 'glow-down', 'glow-neutral');
-            if (iv.verdict_color === 'green') {
-                vCard.classList.add('glow-up');
-                vText.className = 'text-3xl sm:text-4xl font-black tracking-tight text-emerald-400';
-                vIcon.textContent = '🚀';
-                document.getElementById('verdict-subtext').textContent = '거래량 흡수 및 외부 추세가 강력한 상승 모멘텀을 형성하고 있습니다.';
-            } else if (iv.verdict_color === 'red') {
-                vCard.classList.add('glow-down');
-                vText.className = 'text-3xl sm:text-4xl font-black tracking-tight text-rose-500';
-                vIcon.textContent = '🔻';
-                document.getElementById('verdict-subtext').textContent = '매도벽 저항과 하락 압력이 시장을 누르고 있어 추가 하락 위험이 큽니다.';
+                posHoldingTimer.textContent = '04:12 (익절 목표 16.35분)';
+                posHoldingTimer.className = 'font-bold mono text-emerald-400';
+                posExitBadge.textContent = '60분 스크래치 탈출 활성';
             } else {
-                vCard.classList.add('glow-neutral');
-                vText.className = 'text-3xl sm:text-4xl font-black tracking-tight text-gray-200';
-                vIcon.textContent = '⏸️';
-                document.getElementById('verdict-subtext').textContent = '거래량이 터지지 않은 중립 횡보장입니다. 변곡점 시그널까지 관망하세요.';
+                posBadge.textContent = '관망 (FLAT)';
+                posBadge.className = 'text-xs font-extrabold px-2.5 py-0.5 rounded bg-gray-800 text-gray-400';
+
+                posSide.textContent = '⏸️ 관망 (FLAT)';
+                posSide.className = 'text-xs sm:text-sm font-black text-gray-400 mt-0.5';
+                posLev.textContent = '현금 비중 100%';
+
+                posEntry.textContent = '---';
+                posSizeCont.textContent = '0 계약';
+                posSizeUsd.textContent = '($0.00)';
+                posLivePnl.textContent = '0.00%';
+                posLivePnl.className = 'text-xs sm:text-sm font-black mono text-gray-400 mt-0.5';
+                posPnlUsd.textContent = '($0.00)';
+
+                posHoldingTimer.textContent = '변곡점 출현 대기';
+                posHoldingTimer.className = 'font-bold mono text-gray-400';
+                posExitBadge.textContent = '뇌동매매 방지 대기';
             }
 
-            // Compass Meter Bar (-100 ~ +100)
-            const score = iv.composite_score;
-            document.getElementById('meter-score-text').textContent = `${score >= 0 ? '+' : ''}${score} pt`;
-            if (score >= 0) {
-                document.getElementById('meter-bull-bar').style.width = `${Math.min(100, score)}%`;
-                document.getElementById('meter-bear-bar').style.width = `0%`;
-            } else {
-                document.getElementById('meter-bear-bar').style.width = `${Math.min(100, Math.abs(score))}%`;
-                document.getElementById('meter-bull-bar').style.width = `0%`;
-            }
-
-            // 2. 3대 판단 요인 (VOLUME, EXTERNAL, NEWS)
-            document.getElementById('vol-badge').textContent = vf.badge;
-            document.getElementById('vol-desc').textContent = vf.description;
-            document.getElementById('ext-badge').textContent = ef.badge;
-            document.getElementById('ext-desc').textContent = ef.description;
-
-            // Factor 3: News & SNS
-            if (nf) {
-                const newsBadge = document.getElementById('news-badge');
-                const newsDesc = document.getElementById('news-desc');
-                const valFng = document.getElementById('val-fng');
-                const valAttention = document.getElementById('val-attention');
-                if (newsBadge) newsBadge.textContent = nf.badge;
-                if (newsDesc) newsDesc.textContent = nf.description;
-                if (valFng) valFng.textContent = `${nf.fear_greed_score}pt (${nf.fear_greed_label})`;
-                if (valAttention) valAttention.textContent = nf.attention_level.split(' ')[0];
-
-                updateNewsTicker(nf.top_headlines, nf.fear_greed_score, nf.fear_greed_label);
-            }
-
-            // Absorption bars
-            document.getElementById('val-bull-abs').textContent = wonyo.bullish_absorption;
-            document.getElementById('bar-bull-abs').style.width = `${Math.min(100, wonyo.bullish_absorption * 35)}%`;
-            document.getElementById('val-bear-abs').textContent = wonyo.bearish_absorption;
-            document.getElementById('bar-bear-abs').style.width = `${Math.min(100, wonyo.bearish_absorption * 35)}%`;
-
-            // External risk mini stats
-            document.getElementById('val-regime-risk').textContent = risk.regime_risk.status;
-            document.getElementById('val-kaufman').textContent = risk.market_efficiency.score;
-
-            // 3. ORDER PLAN
+            // Order Plan values
             document.getElementById('plan-entry-px').textContent = `$${plan.target_limit_price.toLocaleString()}`;
             document.getElementById('plan-sl-px').textContent = plan.stop_loss_price > 0 ? `$${plan.stop_loss_price.toLocaleString()}` : '---';
             document.getElementById('plan-tp-px').textContent = plan.take_profit_price > 0 ? `$${plan.take_profit_price.toLocaleString()}` : '---';
@@ -1293,12 +930,12 @@
             const indicator = document.getElementById('live-indicator');
 
             if (mode === 'live') {
-                btnLive.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-500 text-black transition';
-                btnReplay.className = 'px-3 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition';
+                btnLive.className = 'px-2.5 py-1 rounded-lg bg-emerald-500 text-black';
+                btnReplay.className = 'px-2.5 py-1 rounded-lg text-gray-400 hover:text-white';
                 indicator.style.display = 'flex';
             } else {
-                btnReplay.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-500 text-black transition';
-                btnLive.className = 'px-3 py-1.5 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition';
+                btnReplay.className = 'px-2.5 py-1 rounded-lg bg-amber-500 text-black';
+                btnLive.className = 'px-2.5 py-1 rounded-lg text-gray-400 hover:text-white';
                 indicator.style.display = 'none';
             }
             loadData();
@@ -1308,12 +945,26 @@
             currentInterval = tf;
             document.querySelectorAll('.tf-btn').forEach(btn => {
                 if (btn.getAttribute('data-tf') === tf) {
-                    btn.className = 'tf-btn px-3 py-1 text-xs font-bold rounded-lg bg-gray-700 text-white';
+                    btn.className = 'tf-btn px-2.5 py-1 rounded-lg bg-gray-700 text-white';
                 } else {
-                    btn.className = 'tf-btn px-3 py-1 text-xs font-bold rounded-lg text-gray-400 hover:text-white';
+                    btn.className = 'tf-btn px-2.5 py-1 rounded-lg text-gray-400 hover:text-white';
                 }
             });
             document.getElementById('chart-timeframe-tag').textContent = `${tf.toUpperCase()}`;
+            loadData();
+        }
+
+        function setSensitivity(sens) {
+            currentSensitivity = sens;
+            const btnStd = document.getElementById('btn-sens-standard');
+            const btnAct = document.getElementById('btn-sens-active');
+            if (sens === 'standard') {
+                if (btnStd) btnStd.className = 'sens-btn px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-sm';
+                if (btnAct) btnAct.className = 'sens-btn px-2.5 py-1 rounded-lg text-gray-400 hover:text-white';
+            } else {
+                if (btnAct) btnAct.className = 'sens-btn px-2.5 py-1 rounded-lg bg-emerald-600 text-white shadow-sm';
+                if (btnStd) btnStd.className = 'sens-btn px-2.5 py-1 rounded-lg text-gray-400 hover:text-white';
+            }
             loadData();
         }
 
