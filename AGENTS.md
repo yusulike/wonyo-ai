@@ -82,3 +82,8 @@
    - 워뇨띠 4대 현실적 리스크 가드 레이더 & 거래량 흡수율(Absorption) 실시간 시각화.
    - 실시간(LIVE) 모드 및 2021 전설의 폭락장 리플레이(REPLAY) 모드 지원.
    - 주소: `http://127.0.0.1:8000`.
+5. **듀얼 AI 퀀트 엔진 연동 (Dual-AI Engine)**:
+   - **ONNX 신경망 (`WonyoImitationNet`)**: 144만 건 실거래 전수학습 기반 C++ 0.36ms 초저지연 오더플로우 및 캔들 시계열 방향성/사이징 예측.
+   - **TypeSafe Jev System One (`news_sentiment.py`)**: 실시간 외신 감성 분석(호재/악재/중립), 확률 캘리브레이션, 거래소 파산 등 시스템 붕괴 감지 블랙스완 리스크 가드.
+6. **트레이딩 핵심 집중형 UI 원칙 (Single-Screen Bloomberg Style)**:
+   - 1줄 슬림 헤더 $\rightarrow$ 마스터 직감 & ONNX 확률 보드 $\rightarrow$ 390px 클린 차트 $\rightarrow$ 원스톱 포지션 패널 $\rightarrow$ 5행 미니 장부 $\rightarrow$ 하단 Jev AI 속보 티커 바 구성.
