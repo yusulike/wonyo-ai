@@ -490,7 +490,7 @@
                         <table class="w-full text-left text-xs font-mono">
                             <thead>
                                 <tr class="text-[10px] text-gray-400 border-b border-gray-800">
-                                    <th class="py-1.5 px-1 font-sans">시간</th>
+                                    <th class="py-1.5 px-1 font-sans">일시 (KST)</th>
                                     <th class="py-1.5 px-1 font-sans">포지션</th>
                                     <th class="py-1.5 px-1 font-sans">진입가</th>
                                     <th class="py-1.5 px-1 font-sans">탈출 사유</th>
@@ -788,7 +788,20 @@
                 if (liveTbody && Array.isArray(data.live_trades)) {
                     liveTbody.innerHTML = data.live_trades.slice(0, 5).map(t => {
                         const side = (t.side || t.direction || 'LONG').toUpperCase();
-                        const time = (t.timestamp_kst || t.time_kst || '--').split(' ')[1] || t.timestamp_kst;
+                        const rawTime = t.timestamp_kst || t.time_kst || '--';
+                        let timeHtml = `<span class="text-gray-400 font-mono">${rawTime}</span>`;
+                        if (rawTime.includes(' ')) {
+                            const parts = rawTime.split(' ');
+                            const dPart = parts[0].includes('-') ? parts[0].slice(5).replace('-', '/') : parts[0];
+                            const tPart = parts[1];
+                            timeHtml = `
+                                <div class="flex flex-col leading-tight">
+                                    <span class="text-[10px] text-gray-400 font-sans font-medium">${dPart}</span>
+                                    <span class="text-gray-200 font-mono text-[11px] font-bold">${tPart}</span>
+                                </div>
+                            `;
+                        }
+
                         const leverage = t.leverage || (side === 'LONG' ? 1.85 : 1.50);
                         const pnlPct = t.pnl_pct ?? 0;
                         const isProfit = pnlPct >= 0;
@@ -799,7 +812,7 @@
                         const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
                         return `
                             <tr class="hover:bg-gray-800/40 transition">
-                                <td class="py-1.5 px-1 text-gray-400">${time}</td>
+                                <td class="py-1.5 px-1">${timeHtml}</td>
                                 <td class="py-1.5 px-1">
                                     <span class="px-1.5 py-0.2 rounded text-[10px] font-bold border ${posColor}">
                                         ${side} ${leverage}x
