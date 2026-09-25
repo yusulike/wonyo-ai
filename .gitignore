@@ -17,3 +17,6 @@ aoa_public_2021-12-31_with_letter*
 .pytest_cache/
 .vercel
 uv.lock
+.env
+.env.*
+!.env.example

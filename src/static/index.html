@@ -460,6 +460,7 @@
                         <div class="flex items-center space-x-1.5">
                             <span class="text-base">📰</span>
                             <span class="text-sm font-bold text-white">3. 시장 심리 & 뉴스</span>
+                            <span id="news-engine-tag" class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Jev AI</span>
                         </div>
                         <span id="news-badge" class="text-xs font-extrabold px-2 py-0.5 rounded-md bg-gray-800 text-gray-300">분석 중</span>
                     </div>
@@ -469,8 +470,8 @@
                             <span id="val-fng" class="mono font-bold text-amber-400">-- pt</span>
                         </div>
                         <div class="flex justify-between text-gray-300">
-                            <span>시장 주목도:</span>
-                            <span id="val-attention" class="mono font-bold text-white truncate max-w-[110px]">NORMAL</span>
+                            <span>Jev 신뢰도:</span>
+                            <span id="val-news-conf" class="mono font-bold text-emerald-400">--%</span>
                         </div>
                     </div>
                 </div>
@@ -963,11 +964,12 @@
             const renderHeadline = () => {
                 if (newsHeadlines.length === 0) return;
                 const item = newsHeadlines[currentHeadlineIdx % newsHeadlines.length];
+                const confText = (item.confidence && item.confidence > 0) ? ` ${Math.round(item.confidence * 100)}%` : '';
                 const sentTag = item.is_bullish 
-                    ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px] mr-1.5">호재</span>' 
+                    ? `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px] mr-1.5">호재${confText}</span>` 
                     : item.is_bearish 
-                    ? '<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold text-[10px] mr-1.5">악재</span>'
-                    : '<span class="px-1.5 py-0.5 rounded bg-gray-700/60 text-gray-300 font-bold text-[10px] mr-1.5">속보</span>';
+                    ? `<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold text-[10px] mr-1.5">악재${confText}</span>`
+                    : '<span class="px-1.5 py-0.5 rounded bg-gray-700/60 text-gray-300 font-bold text-[10px] mr-1.5">속보/중립</span>';
 
                 tickerEl.style.opacity = '0';
                 tickerEl.style.transition = 'opacity 0.25s ease';
@@ -1255,10 +1257,14 @@
                 const newsDesc = document.getElementById('news-desc');
                 const valFng = document.getElementById('val-fng');
                 const valAttention = document.getElementById('val-attention');
+                const valNewsConf = document.getElementById('val-news-conf');
+                const newsEngineTag = document.getElementById('news-engine-tag');
                 if (newsBadge) newsBadge.textContent = nf.badge;
                 if (newsDesc) newsDesc.textContent = nf.description;
                 if (valFng) valFng.textContent = `${nf.fear_greed_score}pt (${nf.fear_greed_label})`;
                 if (valAttention) valAttention.textContent = nf.attention_level.split(' ')[0];
+                if (valNewsConf && nf.avg_confidence) valNewsConf.textContent = `${Math.round(nf.avg_confidence * 100)}%`;
+                if (newsEngineTag && nf.engine) newsEngineTag.textContent = nf.engine.includes('Jev') ? 'Jev AI' : 'Lexicon';
 
                 updateNewsTicker(nf.top_headlines, nf.fear_greed_score, nf.fear_greed_label);
             }

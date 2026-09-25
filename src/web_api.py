@@ -254,7 +254,12 @@ def get_prediction(
         # Wonyotti's 3 Pillars: Volume (50%) + External Technicals (25%) + News/SNS Attention (25%)
         composite_score = int(vol_score * 0.50 + ext_score * 0.25 + news_score * 0.25)
 
-        if composite_score >= 30:
+        black_swan_risk = float(news_data.get("black_swan_risk", 0.0))
+        if black_swan_risk >= 0.50:
+            verdict_badge = "🚨 블랙스완 경보 (SYSTEM RISK)"
+            verdict_color = "red"
+            playbook_text = f"TypeSafe Jev가 {black_swan_risk:.1%} 확률의 시스템적 악재를 감지했습니다. 신규 진입을 전면 중단하고 계좌 안전을 최우선으로 확보하세요."
+        elif composite_score >= 30:
             verdict_badge = "▲ 상승 유력 (STRONG UP)"
             verdict_color = "green"
             playbook_text = "거래량 흡수와 외부 호재/추세가 상방을 가리킵니다. 지정가로 눌림목에 매수 진입 후 16분 이내 고속 익절을 노리세요."
@@ -293,6 +298,10 @@ def get_prediction(
             },
             "news_factor": {
                 "score": news_score,
+                "engine": news_data.get("engine", "Keyword Lexicon"),
+                "avg_confidence": news_data.get("avg_confidence", 0.5),
+                "black_swan_risk": black_swan_risk,
+                "overall_market_bias": news_data.get("overall_market_bias", "neutral"),
                 "fear_greed_score": news_data.get("fear_and_greed", {}).get("score", 50),
                 "fear_greed_label": news_data.get("fear_and_greed", {}).get("label", "Neutral"),
                 "badge": news_data.get("sentiment_badge", "뉴스 중립"),
