@@ -48,11 +48,34 @@
         }
         .has-tooltip {
             cursor: pointer;
-            border-bottom: 1px dotted rgba(255, 255, 255, 0.4);
-            transition: border-color 0.2s, color 0.2s;
         }
-        .has-tooltip:hover {
-            border-bottom-color: #10b981;
+        .tooltip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace, sans-serif;
+            font-weight: 800;
+            line-height: 1;
+            color: #94a3b8;
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s ease-in-out;
+            margin-left: 3px;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        .tooltip-icon:hover {
+            color: #10b981;
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.25);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+            transform: scale(1.1);
         }
     </style>
 </head>
@@ -132,11 +155,10 @@
     <div class="mt-2 hud-card px-3.5 py-1.5 rounded-xl flex flex-wrap items-center justify-between gap-2.5 text-xs border border-gray-800/80 shadow-md">
         <!-- Left: Jev AI Engine Badge + Ticker -->
         <div class="flex items-center space-x-2.5 min-w-0 flex-1">
-            <span class="has-tooltip flex items-center space-x-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold shrink-0 text-[11px]"
-                  data-title="TypeSafe Jev AI"
-                  data-tooltip="외신 속보를 실시간 분석하여 호재/악재 감성 및 블랙스완 확률을 산출하는 구조화 판단 AI입니다.">
+            <span class="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold shrink-0 text-[11px]">
                 <span>⚡ TypeSafe Jev AI</span>
                 <span id="news-engine-tag" class="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300">System One</span>
+                <span class="has-tooltip tooltip-icon" data-title="TypeSafe Jev AI" data-tooltip="외신 속보를 실시간 분석하여 호재/악재 감성 및 블랙스완 확률을 산출하는 구조화 판단 AI입니다.">!</span>
             </span>
             <div id="sb-news-ticker" class="text-gray-300 truncate text-[11px] flex items-center">
                 <span class="text-gray-400">외신 속보 및 감성 분석 로딩 중...</span>
@@ -145,23 +167,20 @@
 
         <!-- Right: Fear & Greed + News Conf + Black Swan Risk -->
         <div class="flex items-center space-x-3 shrink-0 text-[11px] font-mono">
-            <div class="has-tooltip hidden sm:flex items-center space-x-1"
-                 data-title="공포·탐욕 지수"
-                 data-tooltip="얼터너티브(Alternative.me)의 0~100pt 지표로, 0에 가까우면 극단적 공포(매수 기회), 100에 가까우면 극단적 탐욕(과열)을 나타냅니다.">
+            <div class="hidden sm:flex items-center space-x-1">
                 <span class="text-gray-400">탐욕·공포:</span>
                 <span id="val-fng" class="font-bold text-amber-400">-- pt</span>
+                <span class="has-tooltip tooltip-icon" data-title="공포·탐욕 지수" data-tooltip="얼터너티브(Alternative.me)의 0~100pt 지표로, 0에 가까우면 극단적 공포(매수 기회), 100에 가까우면 극단적 탐욕(과열)을 나타냅니다.">!</span>
             </div>
-            <div class="has-tooltip flex items-center space-x-1"
-                 data-title="Jev 확신도"
-                 data-tooltip="외신 기사 분석 결과에 대한 인공지능의 확률적 확신도(Confidence)입니다.">
+            <div class="flex items-center space-x-1">
                 <span class="text-gray-400">Jev 확신도:</span>
                 <span id="val-news-conf" class="font-bold text-emerald-400">--%</span>
+                <span class="has-tooltip tooltip-icon" data-title="Jev 확신도" data-tooltip="외신 기사 분석 결과에 대한 인공지능의 확률적 확신도(Confidence)입니다.">!</span>
             </div>
-            <div class="has-tooltip flex items-center space-x-1 px-2 py-0.5 rounded bg-black/40 border border-gray-800"
-                 data-title="블랙스완 위험"
-                 data-tooltip="거래소 파산, 국가적 긴급 규제, 대형 해킹 등 예측 불가능한 시장 붕괴 위험도를 모니터링합니다.">
+            <div class="flex items-center space-x-1 px-2 py-0.5 rounded bg-black/40 border border-gray-800">
                 <span class="text-gray-400">블랙스완 위험:</span>
                 <span id="val-black-swan" class="font-bold text-emerald-400">0.0%</span>
+                <span class="has-tooltip tooltip-icon" data-title="블랙스완 위험" data-tooltip="거래소 파산, 국가적 긴급 규제, 대형 해킹 등 예측 불가능한 시장 붕괴 위험도를 모니터링합니다.">!</span>
             </div>
         </div>
     </div>
@@ -215,11 +234,11 @@
                 <!-- Signal Readiness Bar -->
                 <div class="mt-2.5 pt-2 border-t border-gray-800/60">
                     <div class="flex items-center justify-between text-[11px] text-gray-400 mb-1">
-                        <span class="has-tooltip inline-flex items-center"
-                              data-title="진입 준비도"
-                              data-tooltip="워뇨띠 시그널 발생을 위해 필요한 거래량 폭발 및 호가 흡수 조건 충족률(%)입니다.">
-                            <span>진입 준비도:</span>
-                            <b id="readiness-long-text" class="text-emerald-400 ml-1">0%</b> (롱) / <b id="readiness-short-text" class="text-rose-400 ml-1">0%</b> (숏)
+                        <span class="inline-flex items-center">
+                            <span>진입 준비도</span>
+                            <span class="has-tooltip tooltip-icon" data-title="진입 준비도" data-tooltip="워뇨띠 시그널 발생을 위해 필요한 거래량 폭발 및 호가 흡수 조건 충족률(%)입니다.">!</span>
+                            <span class="mx-1">:</span>
+                            <b id="readiness-long-text" class="text-emerald-400">0%</b> (롱) / <b id="readiness-short-text" class="text-rose-400 ml-1">0%</b> (숏)
                         </span>
                         <span id="readiness-mode-badge" class="px-1.5 py-0.2 rounded bg-gray-800 text-gray-400 font-mono text-[10px]">목표 62%</span>
                     </div>
@@ -243,10 +262,9 @@
                     <div class="flex items-center space-x-2">
                         <span class="text-xl">🧠</span>
                         <span class="text-xs sm:text-sm font-black text-white uppercase tracking-wider">AI 신경망 직감 예측</span>
-                        <span class="has-tooltip text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold"
-                              data-title="600MB 실거래 전수학습"
-                              data-tooltip="워뇨띠의 실제 BitMEX 144만 건 체결 원본 데이터로 훈련된 모방 인공신경망입니다.">
-                            600MB 실거래 전수학습
+                        <span class="inline-flex items-center text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold">
+                            <span>600MB 실거래 전수학습</span>
+                            <span class="has-tooltip tooltip-icon !border-indigo-400/50 !text-indigo-300 hover:!text-white" data-title="600MB 실거래 전수학습" data-tooltip="워뇨띠의 실제 BitMEX 144만 건 체결 원본 데이터로 훈련된 모방 인공신경망입니다.">!</span>
                         </span>
                     </div>
                     <div class="flex items-center space-x-1.5 text-xs font-mono">
@@ -266,10 +284,9 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <div class="has-tooltip text-[10px] text-gray-400 font-bold uppercase"
-                                 data-title="확신도 / 배율"
-                                 data-tooltip="AI 방향성 확신도(%) 및 켈리 베팅 공식 기반 최적 포지션 진입 배율입니다.">
-                                확신도 / 배율
+                            <div class="flex items-center justify-end text-[10px] text-gray-400 font-bold uppercase">
+                                <span>확신도 / 배율</span>
+                                <span class="has-tooltip tooltip-icon" data-title="확신도 / 배율" data-tooltip="AI 방향성 확신도(%) 및 켈리 베팅 공식 기반 최적 포지션 진입 배율입니다.">!</span>
                             </div>
                             <div id="onnx-conf-text" class="text-xs sm:text-sm font-bold text-indigo-300 mono mt-0.5">--% / 1.0x</div>
                         </div>
@@ -298,28 +315,32 @@
 
                 <!-- Institutional Micro-Risk Chips -->
                 <div class="grid grid-cols-4 gap-1.5 mt-2.5 pt-2 border-t border-gray-800/60 text-[11px] font-mono">
-                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center has-tooltip"
-                         data-title="바닥 매수흡수 (Bull Absorption)"
-                         data-tooltip="가격 급락 시 아래 호가창에서 고래가 던진 물량을 전부 받아먹은 매수 흡수 강도입니다.">
-                        <div class="text-[9px] text-gray-400">바닥 매수흡수</div>
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                        <div class="flex items-center justify-center text-[9px] text-gray-400">
+                            <span>바닥 매수흡수</span>
+                            <span class="has-tooltip tooltip-icon !w-3 !h-3 !text-[8px]" data-title="바닥 매수흡수 (Bull Absorption)" data-tooltip="가격 급락 시 아래 호가창에서 고래가 던진 물량을 전부 받아먹은 매수 흡수 강도입니다.">!</span>
+                        </div>
                         <div id="val-bull-abs" class="font-bold text-emerald-400">0.00</div>
                     </div>
-                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center has-tooltip"
-                         data-title="고점 매도저항 (Bear Absorption)"
-                         data-tooltip="가격 급등 시 상단 매도벽에 대량 체결이 부딪히며 상승세가 꺾인 매도 저항 강도입니다.">
-                        <div class="text-[9px] text-gray-400">고점 매도저항</div>
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                        <div class="flex items-center justify-center text-[9px] text-gray-400">
+                            <span>고점 매도저항</span>
+                            <span class="has-tooltip tooltip-icon !w-3 !h-3 !text-[8px]" data-title="고점 매도저항 (Bear Absorption)" data-tooltip="가격 급등 시 상단 매도벽에 대량 체결이 부딪히며 상승세가 꺾인 매도 저항 강도입니다.">!</span>
+                        </div>
                         <div id="val-bear-abs" class="font-bold text-rose-400">0.00</div>
                     </div>
-                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center has-tooltip"
-                         data-title="변동성 위험 (Regime Risk)"
-                         data-tooltip="급격한 변동성 폭발로 인한 휩소(속임수 무빙) 위험 및 비정상 장세 여부를 실시간 진단합니다.">
-                        <div class="text-[9px] text-gray-400">변동성 위험</div>
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                        <div class="flex items-center justify-center text-[9px] text-gray-400">
+                            <span>변동성 위험</span>
+                            <span class="has-tooltip tooltip-icon !w-3 !h-3 !text-[8px]" data-title="변동성 위험 (Regime Risk)" data-tooltip="급격한 변동성 폭발로 인한 휩소(속임수 무빙) 위험 및 비정상 장세 여부를 실시간 진단합니다.">!</span>
+                        </div>
                         <div id="val-regime-risk" class="font-bold text-white">NORMAL</div>
                     </div>
-                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center has-tooltip"
-                         data-title="추세 효율비 (Kaufman ER)"
-                         data-tooltip="카우프만 효율비(ER): 1에 가까울수록 매끄러운 단방향 추세, 0에 가까우면 잦은 방향 전환과 횡보 노이즈를 의미합니다.">
-                        <div class="text-[9px] text-gray-400">추세 효율비</div>
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                        <div class="flex items-center justify-center text-[9px] text-gray-400">
+                            <span>추세 효율비</span>
+                            <span class="has-tooltip tooltip-icon !w-3 !h-3 !text-[8px]" data-title="추세 효율비 (Kaufman ER)" data-tooltip="카우프만 효율비(ER): 1에 가까울수록 매끄러운 단방향 추세, 0에 가까우면 잦은 방향 전환과 횡보 노이즈를 의미합니다.">!</span>
+                        </div>
                         <div id="val-kaufman" class="font-bold text-amber-400">0.00</div>
                     </div>
                 </div>
@@ -357,31 +378,35 @@
 
             <!-- 4 Quick Key Metrics Bar -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                <div class="hud-card p-2.5 rounded-xl has-tooltip"
-                     data-title="거래량 터짐 지수 (Volume Z-Score)"
-                     data-tooltip="볼륨 Z-Score: 20봉 평균 대비 현재 거래량이 몇 배(표준편차) 급증했는지 나타냅니다. 2.0 초과 시 고래 개입으로 판정합니다.">
-                    <div class="text-[11px] text-gray-400 font-bold">거래량 터짐 지수</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 font-bold">
+                        <span>거래량 터짐 지수</span>
+                        <span class="has-tooltip tooltip-icon" data-title="거래량 터짐 지수 (Volume Z-Score)" data-tooltip="볼륨 Z-Score: 20봉 평균 대비 현재 거래량이 몇 배(표준편차) 급증했는지 나타냅니다. 2.0 초과 시 고래 개입으로 판정합니다.">!</span>
+                    </div>
                     <div id="metric-vol-z" class="text-base sm:text-lg font-black mono text-emerald-400 mt-0.5">+0.00</div>
                     <div class="text-[10px] text-gray-400 mt-0.5">> 2.0 고래 개입</div>
                 </div>
-                <div class="hud-card p-2.5 rounded-xl has-tooltip"
-                     data-title="평소 대비 거래량"
-                     data-tooltip="직전 20개 봉 평균 거래량 대비 현재 봉의 거래량이 몇 배(x) 폭발했는지 나타내는 배수입니다.">
-                    <div class="text-[11px] text-gray-400 font-bold">평소 대비 거래량</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 font-bold">
+                        <span>평소 대비 거래량</span>
+                        <span class="has-tooltip tooltip-icon" data-title="평소 대비 거래량" data-tooltip="직전 20개 봉 평균 거래량 대비 현재 봉의 거래량이 몇 배(x) 폭발했는지 나타내는 배수입니다.">!</span>
+                    </div>
                     <div id="metric-vol-exh" class="text-base sm:text-lg font-black mono text-white mt-0.5">1.00x</div>
                     <div class="text-[10px] text-gray-400 mt-0.5">20봉 평균 대비</div>
                 </div>
-                <div class="hud-card p-2.5 rounded-xl has-tooltip"
-                     data-title="추세선 이격도"
-                     data-tooltip="50선 단기 기준선 대비 현재 가격이 얼마나 벌어져(이격) 있는지 백분율(%)로 나타낸 지표입니다.">
-                    <div class="text-[11px] text-gray-400 font-bold">추세선 이격도</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 font-bold">
+                        <span>추세선 이격도</span>
+                        <span class="has-tooltip tooltip-icon" data-title="추세선 이격도" data-tooltip="50선 단기 기준선 대비 현재 가격이 얼마나 벌어져(이격) 있는지 백분율(%)로 나타낸 지표입니다.">!</span>
+                    </div>
                     <div id="metric-trend-bias" class="text-base sm:text-lg font-black mono text-gray-300 mt-0.5">0.00%</div>
                     <div class="text-[10px] text-gray-400 mt-0.5">50선 기준 이격</div>
                 </div>
-                <div class="hud-card p-2.5 rounded-xl has-tooltip"
-                     data-title="1봉당 흔들기 폭 (ATR %)"
-                     data-tooltip="ATR %: 캔들 1개당 평균적인 고점-저점 변동 진폭입니다. 손절 및 익절 목표폭 설정의 핵심 기준입니다.">
-                    <div class="text-[11px] text-gray-400 font-bold">1봉당 흔들기 폭</div>
+                <div class="hud-card p-2.5 rounded-xl">
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 font-bold">
+                        <span>1봉당 흔들기 폭</span>
+                        <span class="has-tooltip tooltip-icon" data-title="1봉당 흔들기 폭 (ATR %)" data-tooltip="ATR %: 캔들 1개당 평균적인 고점-저점 변동 진폭입니다. 손절 및 익절 목표폭 설정의 핵심 기준입니다.">!</span>
+                    </div>
                     <div id="metric-atr-pct" class="text-base sm:text-lg font-black mono text-amber-400 mt-0.5">1.00%</div>
                     <div class="text-[10px] text-gray-400 mt-0.5">평균 변동성 크기</div>
                 </div>
@@ -451,11 +476,12 @@
                         <span class="text-gray-400 font-sans">보유 경과:</span>
                         <span id="pos-holding-timer" class="font-bold mono text-emerald-400">00:00 (16.35분 기준)</span>
                     </div>
-                    <span id="pos-exit-rule-badge" class="has-tooltip px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                          data-title="스크래치 탈출 (Scratch Exit)"
-                          data-tooltip="진입 후 60분이 지나도 지지부진하면 -0.4% 이내 약반등 시 본절 수준에서 조기 탈출하는 워뇨띠식 칼손실 방어 룰입니다.">
-                        60분 스크래치 탈출 대기
-                    </span>
+                    <div class="flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        <span id="pos-exit-rule-badge">60분 스크래치 탈출 대기</span>
+                        <span class="has-tooltip tooltip-icon !border-amber-400/50 !text-amber-300 hover:!text-white"
+                              data-title="스크래치 탈출 (Scratch Exit)"
+                              data-tooltip="진입 후 60분이 지나도 지지부진하면 -0.4% 이내 약반등 시 본절 수준에서 조기 탈출하는 워뇨띠식 칼손실 방어 룰입니다.">!</span>
+                    </div>
                 </div>
             </div>
 
@@ -466,17 +492,19 @@
                     <div class="flex items-center justify-between pb-2 border-b border-gray-800 text-xs">
                         <div class="flex items-center space-x-2">
                             <button id="tab-btn-live-trades" onclick="switchTradeTab('live')" 
-                                    class="has-tooltip px-2.5 py-1 rounded-lg font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center space-x-1"
-                                    data-title="실시간 체결 장부"
-                                    data-tooltip="워뇨-AI 엔진 신호 규칙에 따라 가상으로 진입하고 청산된 실시간 시뮬레이션 매매 일지입니다.">
+                                    class="px-2.5 py-1 rounded-lg font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center space-x-1">
                                 <span>⚡ 실시간 체결 장부</span>
                                 <span id="badge-live-trades-count" class="px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-[9px] font-mono">5건</span>
+                                <span class="has-tooltip tooltip-icon !w-3.5 !h-3.5 !text-[9px] ml-1"
+                                      data-title="실시간 체결 장부"
+                                      data-tooltip="워뇨-AI 엔진 신호 규칙에 따라 가상으로 진입하고 청산된 실시간 시뮬레이션 매매 일지입니다.">!</span>
                             </button>
                             <button id="tab-btn-legend-trades" onclick="switchTradeTab('legend')" 
-                                    class="has-tooltip px-2.5 py-1 rounded-lg font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1"
-                                    data-title="2021 전설 복기"
-                                    data-tooltip="2021년 부처빔 등 대폭락장에서 워뇨띠가 실제로 BitMEX에서 수천 BTC 수익을 냈던 역사적 실거래 기록입니다.">
+                                    class="px-2.5 py-1 rounded-lg font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1">
                                 <span>🏆 2021 전설 복기</span>
+                                <span class="has-tooltip tooltip-icon !w-3.5 !h-3.5 !text-[9px] ml-1"
+                                      data-title="2021 전설 복기"
+                                      data-tooltip="2021년 부처빔 등 대폭락장에서 워뇨띠가 실제로 BitMEX에서 수천 BTC 수익을 냈던 역사적 실거래 기록입니다.">!</span>
                             </button>
                         </div>
                         <div class="text-[11px] font-mono text-gray-400 hidden sm:flex items-center space-x-2">
@@ -666,15 +694,16 @@
                 const text = el.getAttribute('data-tooltip') || '';
                 if (!text) return;
 
-                // Mobile Touch & Click handler
+                // Mobile Touch & Click handler on exclamation icon
                 el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
                     if (window.innerWidth < 768 || ('ontouchstart' in window)) {
-                        e.stopPropagation();
                         showMobileTooltip(title, text);
                     }
                 });
 
-                // Desktop Hover Handlers
+                // Desktop Hover Handlers on exclamation icon
                 el.addEventListener('mouseenter', () => {
                     if (window.innerWidth < 768) return;
                     if (!dTooltip || !dTitle || !dText) return;
@@ -694,8 +723,9 @@
                         left = window.innerWidth - tooltipWidth - 12;
                     }
 
-                    // Place above element if there's room, otherwise below
-                    let top = rect.top - 70;
+                    // Dynamically place above element if there's room, otherwise below
+                    const tooltipHeight = dTooltip.offsetHeight || 64;
+                    let top = rect.top - tooltipHeight - 8;
                     if (top < 10) {
                         top = rect.bottom + 8;
                     }
@@ -783,9 +813,14 @@
                 const data = await res.json();
                 if (data.status !== 'SUCCESS') return;
 
-                // 1. Live Trades Tbody
+                // 1. Live Trades Tbody (Strict descending sort by trade execution timestamp)
                 const liveTbody = document.getElementById('live-trades-tbody');
                 if (liveTbody && Array.isArray(data.live_trades)) {
+                    data.live_trades.sort((a, b) => {
+                        const timeA = a.timestamp_kst || a.time_kst || '';
+                        const timeB = b.timestamp_kst || b.time_kst || '';
+                        return timeB.localeCompare(timeA);
+                    });
                     liveTbody.innerHTML = data.live_trades.slice(0, 5).map(t => {
                         const side = (t.side || t.direction || 'LONG').toUpperCase();
                         const rawTime = t.timestamp_kst || t.time_kst || '--';

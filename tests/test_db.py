@@ -62,3 +62,36 @@ def test_legendary_trades_included():
     assert "legendary_trades" in data
     assert len(data["legendary_trades"]) >= 3
     assert data["legendary_trades"][0]["title"] == "2021.05.19 부처빔 바닥 쓸어담기"
+
+def test_trades_sorted_descending_by_timestamp(tmp_path):
+    """Verify trades are strictly returned in descending order of trade transaction timestamp."""
+    db_file = tmp_path / "test_sort_trades.db"
+    mgr = WonyoDBManager(postgres_url=None, sqlite_path=str(db_file))
+    mgr.init_db()
+
+    # Record out-of-order trades
+    mgr.record_trade({
+        "id": "TRD-EARLY",
+        "timestamp_kst": "2026-09-20 10:00",
+        "direction": "LONG",
+        "entry_price": 80000.0,
+        "exit_price": 81000.0,
+        "pnl_pct": 1.25
+    })
+    mgr.record_trade({
+        "id": "TRD-LATEST",
+        "timestamp_kst": "2026-09-25 18:30",
+        "direction": "SHORT",
+        "entry_price": 85000.0,
+        "exit_price": 84000.0,
+        "pnl_pct": 1.18
+    })
+
+    data = mgr.get_trades_history(limit=50)
+    trades = data["live_trades"]
+    timestamps = [t.get("timestamp_kst") or t.get("time_kst") or "" for t in trades]
+    # Check that timestamps list is strictly monotonically non-increasing (descending)
+    for i in range(len(timestamps) - 1):
+        assert timestamps[i] >= timestamps[i + 1], f"Trade at {i} ({timestamps[i]}) is older than {i+1} ({timestamps[i+1]})"
+    assert trades[0]["id"] == "TRD-LATEST"
+

@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 from urllib.parse import urlparse
 from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone, timedelta
 import sqlite3
 import tempfile
 
@@ -360,10 +361,12 @@ class WonyoDBManager:
         """Inserts a newly executed virtual trade into persistent storage."""
         self.init_db()
 
+        now_kst = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M")
+        ts = trade.get("timestamp_kst") or trade.get("time_kst") or now_kst
         trade_data = {
             "id": trade.get("id", f"TRD-{int(os.times().elapsed * 1000)}"),
-            "time_kst": trade.get("time_kst") or trade.get("timestamp_kst", "--"),
-            "timestamp_kst": trade.get("timestamp_kst") or trade.get("time_kst", "--"),
+            "time_kst": ts,
+            "timestamp_kst": ts,
             "direction": trade.get("direction") or trade.get("side", "LONG"),
             "side": trade.get("side") or trade.get("direction", "LONG"),
             "leverage": float(trade.get("leverage", 1.85)),
@@ -478,7 +481,7 @@ class WonyoDBManager:
                                    entry_price, exit_price, pnl_pct, pnl_btc, maker_rebate_btc,
                                    exit_reason, holding_time, bars_held
                             FROM trades
-                            ORDER BY created_at DESC, id DESC
+                            ORDER BY timestamp_kst DESC, time_kst DESC, id DESC
                             LIMIT {limit_val};
                         """)
                         for r in rows:
@@ -515,7 +518,7 @@ class WonyoDBManager:
                                entry_price, exit_price, pnl_pct, pnl_btc, maker_rebate_btc,
                                exit_reason, holding_time, bars_held
                         FROM trades
-                        ORDER BY created_at DESC, rowid DESC
+                        ORDER BY timestamp_kst DESC, time_kst DESC, rowid DESC
                         LIMIT {limit_val};
                     """)
                     for r in cursor.fetchall():
@@ -528,6 +531,9 @@ class WonyoDBManager:
 
             if not live_trades:
                 live_trades = list(DEFAULT_SEED_TRADES)
+
+            # Strict descending sort by trade execution timestamp (거래시점 기준 최신순 정렬)
+            live_trades.sort(key=lambda x: (x.get("timestamp_kst") or x.get("time_kst") or ""), reverse=True)
 
             # Compute Summary Statistics
             tot_trades = len(live_trades)
