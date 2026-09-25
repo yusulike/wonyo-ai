@@ -419,7 +419,7 @@ def get_candles(
         df = extractor.compute_features(df_raw)
         
         candles = []
-        for _, r in df.iterrows():
+        for r in df.to_dict(orient="records"):
             ts_epoch = int(pd.to_datetime(r["timestamp"]).timestamp())
             candles.append({
                 "time": ts_epoch,

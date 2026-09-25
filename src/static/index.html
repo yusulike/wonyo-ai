@@ -904,24 +904,14 @@
             resizeObserver.observe(container);
         }
 
-        // --- Load Data from /api/predict & /api/candles ---
-        async function loadData() {
+        // --- Independent Parallel Data Loaders for Instant Rendering ---
+        async function loadCandles() {
             try {
-                // 1. Fetch Prediction Signal
-                const predUrl = `/api/predict?mode=${currentMode}&interval=${currentInterval}&sensitivity=${currentSensitivity}`;
-                const resPred = await fetch(predUrl);
-                const dataPred = await resPred.json();
-
-                if (dataPred.status === 'SUCCESS') {
-                    updateIntuitiveDashboard(dataPred);
-                }
-
-                // 2. Fetch Chart Candles
                 const cUrl = `/api/candles?mode=${currentMode}&interval=${currentInterval}&limit=100`;
                 const resCandles = await fetch(cUrl);
                 const dataCandles = await resCandles.json();
 
-                if (dataCandles.status === 'SUCCESS' && candleSeries && volumeSeries) {
+                if (dataCandles.status === 'SUCCESS' && candleSeries && volumeSeries && Array.isArray(dataCandles.candles)) {
                     const cData = [];
                     const vData = [];
                     const markers = [];
@@ -958,21 +948,51 @@
                     volumeSeries.setData(vData);
                     candleSeries.setMarkers(markers);
                     chart.timeScale().fitContent();
-                }
 
-                // 3. Fetch Trades
-                await loadTrades();
-
-                const badge = document.getElementById('last-updated-badge');
-                if (badge) {
-                    const d = new Date();
-                    const kstHours = String(d.getHours()).padStart(2, '0');
-                    const kstMins = String(d.getMinutes()).padStart(2, '0');
-                    const kstSecs = String(d.getSeconds()).padStart(2, '0');
-                    badge.textContent = `• ${kstHours}:${kstMins}:${kstSecs} KST`;
+                    // Instantly update live price header if not set yet
+                    if (cData.length > 0) {
+                        const lastClose = cData[cData.length - 1].close;
+                        const priceEl = document.getElementById('live-btc-price');
+                        if (priceEl && priceEl.textContent.includes('---')) {
+                            priceEl.textContent = `$${lastClose.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}`;
+                        }
+                    }
                 }
             } catch (err) {
-                console.error("Load data error:", err);
+                console.error("Candles load error:", err);
+            }
+        }
+
+        async function loadPrediction() {
+            try {
+                const predUrl = `/api/predict?mode=${currentMode}&interval=${currentInterval}&sensitivity=${currentSensitivity}`;
+                const resPred = await fetch(predUrl);
+                const dataPred = await resPred.json();
+
+                if (dataPred.status === 'SUCCESS') {
+                    updateIntuitiveDashboard(dataPred);
+                }
+            } catch (err) {
+                console.error("Prediction load error:", err);
+            }
+        }
+
+        // --- Load All Data in Parallel (Non-Blocking) ---
+        async function loadData() {
+            // Trigger candles, prediction, and trades all at once!
+            await Promise.allSettled([
+                loadCandles(),
+                loadPrediction(),
+                loadTrades()
+            ]);
+
+            const badge = document.getElementById('last-updated-badge');
+            if (badge) {
+                const d = new Date();
+                const kstHours = String(d.getHours()).padStart(2, '0');
+                const kstMins = String(d.getMinutes()).padStart(2, '0');
+                const kstSecs = String(d.getSeconds()).padStart(2, '0');
+                badge.textContent = `• ${kstHours}:${kstMins}:${kstSecs} KST`;
             }
         }
 
