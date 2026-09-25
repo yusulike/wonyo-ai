@@ -15,6 +15,7 @@ def handle_predict(request: Request, full_path: str = ""):
     params = dict(request.query_params)
     mode = params.get("mode", "live")
     interval = params.get("interval", "15m")
+    sensitivity = params.get("sensitivity", "standard")
     equity_btc = float(params.get("equity_btc", 10.0))
     consecutive_losses = int(params.get("consecutive_losses", 0))
-    return get_prediction(mode=mode, interval=interval, equity_btc=equity_btc, consecutive_losses=consecutive_losses)
+    return get_prediction(mode=mode, interval=interval, sensitivity=sensitivity, equity_btc=equity_btc, consecutive_losses=consecutive_losses)

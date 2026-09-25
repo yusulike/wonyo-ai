@@ -7,6 +7,10 @@
     {
       "source": "/api/candles(.*)",
       "destination": "/api/candles"
+    },
+    {
+      "source": "/api/trades(.*)",
+      "destination": "/api/trades"
     }
   ]
 }
