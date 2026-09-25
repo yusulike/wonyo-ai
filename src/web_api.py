@@ -618,8 +618,9 @@ LEGENDARY_TRADES: List[Dict[str, Any]] = [
 @app.get("/api/trades")
 @app.get("/api/trades/")
 @app.get("/trades")
-def get_trades_history(limit: int = Query(20, ge=1, le=100)):
-    return get_db_manager().get_trades_history(limit=limit)
+def get_trades_history(limit: Optional[int] = 20):
+    lim = limit if isinstance(limit, int) and limit > 0 else 20
+    return get_db_manager().get_trades_history(limit=lim)
 
 @app.post("/api/trades")
 @app.post("/api/trades/")
