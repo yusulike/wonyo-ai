@@ -525,7 +525,11 @@
                 <!-- Footer Summary Line -->
                 <div class="pt-2 border-t border-gray-800/60 flex items-center justify-between text-[11px] text-gray-400 font-sans">
                     <span id="sb-news-status">탐욕·공포: 71pt 탐욕</span>
-                    <span class="text-indigo-400 font-mono">Post-Only Limit Maker Strategy</span>
+                    <span class="text-indigo-400 font-mono flex items-center space-x-1">
+                        <span>Post-Only Limit</span>
+                        <span class="text-gray-600">•</span>
+                        <span id="db-storage-tag" class="text-emerald-400 font-bold">Vercel Postgres</span>
+                    </span>
                 </div>
             </div>
 
@@ -837,6 +841,11 @@
                     if (badgeCount) badgeCount.textContent = `${data.live_trades ? data.live_trades.length : 5}건`;
                     if (sumWinrate && s.win_rate_pct) sumWinrate.textContent = `${s.win_rate_pct.toFixed(1)}%`;
                     if (sumPnl && s.net_pnl_btc) sumPnl.textContent = `${s.net_pnl_btc >= 0 ? '+' : ''}${s.net_pnl_btc.toFixed(1)} BTC`;
+                }
+
+                if (data.storage_type) {
+                    const tag = document.getElementById('db-storage-tag');
+                    if (tag) tag.textContent = data.storage_type.includes('Postgres') ? 'Vercel Postgres' : 'SQLite DB';
                 }
             } catch (e) {
                 console.error("Trades ledger error:", e);

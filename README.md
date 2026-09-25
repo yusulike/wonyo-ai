@@ -131,7 +131,10 @@
   * **ONNX Runtime (v1.20+)**: C++ 최적화 초경량(13MB) 고속 시계열 추론 엔진 (0.36ms Latency)
   * **TypeSafe SDK (Jev System One)**: 외신 감성 분류, 확률 캘리브레이션, 블랙스완 가드
   * **PyTorch (v2.6)**: Colab GPU 학습 모델 빌더 및 ONNX 익스포터
-  * **DuckDB / Polars**: 600MB 체결 CSV 초고속 SQL ETL 파이프라인
+* **데이터베이스 & 영구 저장소**:
+  * **Vercel Postgres (Neon Serverless)**: 클라우드 서버리스 PostgreSQL 영구 체결 장부 연동
+  * **pg8000**: Vercel Serverless 환경 최적화 순수 파이썬(Pure Python) 초경량 DB 드라이버
+  * **SQLite (Local Fallback)**: 로컬 개발 및 테스트를 위한 무중단 자동 폴백
 * **백엔드 프레임워크**: FastAPI, Uvicorn, Pydantic, Requests
 * **프론트엔드**: Vanilla HTML5, Tailwind CSS, TradingView Lightweight Charts (v4.2.0 고정)
 * **클라우드 & 인프라**: Google Colab CLI (GPU 분산 학습), Vercel Serverless Functions, Edge CDN
@@ -170,7 +173,7 @@ uv run python src/test_onnx_inference.py
 # TypeSafe Jev System One 감성 분석 검증
 uv run python src/test_predict_api.py
 
-# 24개 전수 단위 테스트 실행
+# 28개 전수 단위 테스트 실행
 uv run pytest
 ```
 
@@ -184,7 +187,8 @@ uv run pytest
 | `GET` | `/api/predict` | `mode` (`live`/`replay`), `interval` (`5m`/`15m`/`1h`), `sensitivity` (`standard`/`active`) | 워뇨띠 직감 판단, 4대 리스크 매트릭스, ONNX 신경망 확률 및 TypeSafe Jev 외신 감성 통합 반환 |
 | `GET` | `/api/nn-prediction` | `mode`, `interval` | C++ 최적화 ONNX 런타임 전용 초저지연 신경망 예측 결과 반환 |
 | `GET` | `/api/candles` | `mode`, `interval`, `limit` | 실시간 캔들스틱 및 거래량 흡수(Bull/Bear Absorption) 오버레이 데이터 |
-| `GET` | `/api/trades` | - | 실시간 가상 체결 내역 및 2021년 전설의 매매 복기 장부 반환 |
+| `GET` | `/api/trades` | `limit` (기본 20) | Vercel Postgres / SQLite에 영구 저장된 실시간 체결 장부 및 2021 전설 복기 데이터 반환 |
+| `POST` | `/api/trades` | JSON 체결 레코드 | 신규 가상/실제 체결 내역을 데이터베이스에 영구 기록 |
 
 ---
 
@@ -208,6 +212,7 @@ wonyo-ai/
 │   ├── onnx_predictor.py       # 초경량 ONNX Runtime C++ 추론 엔진
 │   ├── news_sentiment.py       # TypeSafe Jev System One 외신 감성 및 블랙스완 엔진
 │   ├── wonyo_nn_model.onnx     # 프로덕션 서빙용 ONNX 신경망 모델
+│   ├── db.py                   # Vercel Postgres / SQLite 영구 체결 장부 매니저
 │   ├── service_engine.py       # 3단 래더 및 리스크 가드 서비스 엔진
 │   ├── risk_engine.py          # 4대 리스크 인풋 벡터 및 켈리 사이징 계산기
 │   ├── feature_extractor.py    # 12대 퀀트 및 오더플로우 지표 추출기
@@ -215,6 +220,7 @@ wonyo-ai/
 │   ├── test_onnx_inference.py  # ONNX 추론 지연시간 벤치마크 스크립트
 │   └── test_predict_api.py     # TypeSafe Jev 및 API 예측 응답 검증 스크립트
 ├── tests/                      # 자동화 테스트 스위트
+│   ├── test_db.py              # 영구 데이터베이스 및 폴백 로직 검증
 │   ├── test_onnx.py            # ONNX 추론 정확성 및 입출력 규격 검증
 │   ├── test_risk_engine.py     # 켈리 공식 및 리스크 한도 검증
 │   └── test_web_api.py         # 웹 API 엔드포인트 및 서버리스 핸들러 테스트

@@ -22,6 +22,7 @@ from src.wonyo_model import WonyoAIModel, ActionType
 from src.feature_extractor import WonyoFeatureExtractor
 from src.news_sentiment import news_engine
 from src.onnx_predictor import WonyoONNXPredictor
+from src.db import get_db_manager
 
 app = FastAPI(title="Wonyo-AI Institutional Terminal", version="1.0.0", redirect_slashes=False)
 
@@ -617,52 +618,14 @@ LEGENDARY_TRADES: List[Dict[str, Any]] = [
 @app.get("/api/trades")
 @app.get("/api/trades/")
 @app.get("/trades")
-def get_trades_history():
-    tot_trades = len(LIVE_TRADES_HISTORY)
-    wins = [t for t in LIVE_TRADES_HISTORY if t["pnl_pct"] > 0]
-    win_cnt = len(wins)
-    loss_cnt = tot_trades - win_cnt
-    win_rate = round((win_cnt / tot_trades * 100.0) if tot_trades > 0 else 0.0, 1)
-    tot_pnl_btc = round(sum(t["pnl_btc"] for t in LIVE_TRADES_HISTORY), 4)
-    tot_rebates_btc = round(sum(t.get("maker_rebate_btc", 0.0) for t in LIVE_TRADES_HISTORY), 5)
+def get_trades_history(limit: int = Query(20, ge=1, le=100)):
+    return get_db_manager().get_trades_history(limit=limit)
 
-    initial_seed = 10.0
-    current_seed = round(initial_seed + tot_pnl_btc + tot_rebates_btc, 4)
-    return_pct = round(((current_seed - initial_seed) / initial_seed) * 100.0, 2)
-
-    if current_seed >= 50.0:
-        level, title = 99, "Lv.99 전설의 고래"
-    elif current_seed >= 20.0:
-        level, title = 85, "Lv.85 슈퍼 웨일"
-    elif current_seed >= 10.0:
-        level, title = 77, "Lv.77 비맥 랭커"
-    elif current_seed >= 5.0:
-        level, title = 40, "Lv.40 단타 머신"
-    else:
-        level, title = 10, "Lv.10 차갤 뉴비"
-
-    return {
-        "status": "SUCCESS",
-        "summary": {
-            "initial_seed_btc": initial_seed,
-            "current_seed_btc": current_seed,
-            "return_pct": return_pct,
-            "total_trades": tot_trades,
-            "win_trades": win_cnt,
-            "loss_trades": loss_cnt,
-            "wins": win_cnt,
-            "losses": loss_cnt,
-            "win_rate_pct": win_rate,
-            "total_pnl_btc": tot_pnl_btc,
-            "net_pnl_btc": tot_pnl_btc,
-            "total_rebates_btc": tot_rebates_btc,
-            "total_rebate_btc": tot_rebates_btc,
-            "wonyo_level": level,
-            "wonyo_title": title
-        },
-        "live_trades": LIVE_TRADES_HISTORY,
-        "legendary_trades": LEGENDARY_TRADES
-    }
+@app.post("/api/trades")
+@app.post("/api/trades/")
+def record_new_trade(trade: Dict[str, Any]):
+    success = get_db_manager().record_trade(trade)
+    return {"status": "SUCCESS" if success else "ERROR", "recorded": success}
 
 @app.get("/", response_class=HTMLResponse)
 def serve_index():

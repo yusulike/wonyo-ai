@@ -14,6 +14,8 @@ aoa_public_2021-12-31_with_letter*
 *.zip
 *.parquet
 *.csv
+*.db
+data/
 .pytest_cache/
 .vercel
 uv.lock

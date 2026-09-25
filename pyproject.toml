@@ -12,6 +12,7 @@ dependencies = [
     "onnx>=1.23.0",
     "onnxruntime>=1.30.0",
     "pandas>=3.0.6",
+    "pg8000>=1.31.5",
     "polars>=1.44.2",
     "pyarrow>=25.0.1",
     "python-dotenv>=1.2.3",

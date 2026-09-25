@@ -101,3 +101,29 @@ def test_standalone_trades_app():
     assert data["status"] == "SUCCESS"
     assert "summary" in data
 
+def test_record_trade_endpoint():
+    new_trade = {
+        "id": "TRD-API-TEST-1",
+        "direction": "LONG",
+        "side": "LONG",
+        "leverage": 2.5,
+        "entry_price": 84500.0,
+        "exit_price": 85500.0,
+        "pnl_pct": 1.18,
+        "pnl_btc": 0.0118,
+        "maker_rebate_btc": 0.00035,
+        "exit_reason": "1차 목표가 도달 (TP)",
+        "holding_time": "15분",
+        "bars_held": 1
+    }
+    post_resp = client.post("/api/trades", json=new_trade)
+    assert post_resp.status_code == 200
+    assert post_resp.json()["status"] == "SUCCESS"
+    assert post_resp.json()["recorded"] is True
+
+    # Check it appears in /api/trades
+    get_resp = client.get("/api/trades")
+    assert get_resp.status_code == 200
+    trade_ids = [t["id"] for t in get_resp.json()["live_trades"]]
+    assert "TRD-API-TEST-1" in trade_ids
+

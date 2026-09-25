@@ -6,3 +6,4 @@ requests>=2.31.0
 feedparser>=6.0.10
 onnxruntime>=1.18.0
 typesafe-sdk>=0.7.1
+pg8000>=1.31.0
