@@ -46,6 +46,58 @@
             background: rgba(255, 255, 255, 0.15);
             border-radius: 3px;
         }
+        .has-tooltip {
+            position: relative;
+            cursor: help;
+        }
+        .tooltip-box {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: calc(100% + 7px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.98);
+            color: #f1f5f9;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
+            font-size: 11px;
+            line-height: 1.45;
+            white-space: normal;
+            width: max-content;
+            max-width: 230px;
+            z-index: 100;
+            pointer-events: none;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 500;
+            text-align: left;
+        }
+        .tooltip-box::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(15, 23, 42, 0.98) transparent transparent transparent;
+        }
+        .has-tooltip:hover .tooltip-box {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip-bottom .tooltip-box {
+            bottom: auto;
+            top: calc(100% + 7px);
+        }
+        .tooltip-bottom .tooltip-box::after {
+            top: auto;
+            bottom: 100%;
+            border-color: transparent transparent rgba(15, 23, 42, 0.98) transparent;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-2.5 sm:p-4 max-w-[1720px] mx-auto w-full">
@@ -102,7 +154,41 @@
         </div>
     </header>
 
-    <!-- 2. UNIFIED MASTER SIGNAL & ONNX NEURAL NETWORK BOARD (상단 통합 시그널 패널) -->
+    <!-- 2. TYPESAFE JEV SYSTEM ONE LIVE NEWS TICKER & BLACK SWAN GUARD (상단 헤더 바로 아래) -->
+    <div class="mt-2 hud-card px-3.5 py-1.5 rounded-xl flex flex-wrap items-center justify-between gap-2.5 text-xs border border-gray-800/80 shadow-md">
+        <!-- Left: Jev AI Engine Badge + Ticker -->
+        <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+            <span class="has-tooltip tooltip-bottom flex items-center space-x-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold shrink-0 text-[11px]">
+                <span>⚡ TypeSafe Jev AI</span>
+                <span id="news-engine-tag" class="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300">System One</span>
+                <span class="tooltip-box">외신 속보를 실시간 분석하여 호재/악재 감성 및 블랙스완 확률을 산출하는 구조화 판단 AI</span>
+            </span>
+            <div id="sb-news-ticker" class="text-gray-300 truncate text-[11px] flex items-center">
+                <span class="text-gray-400">외신 속보 및 감성 분석 로딩 중...</span>
+            </div>
+        </div>
+
+        <!-- Right: Fear & Greed + News Conf + Black Swan Risk -->
+        <div class="flex items-center space-x-3 shrink-0 text-[11px] font-mono">
+            <div class="has-tooltip tooltip-bottom hidden sm:flex items-center space-x-1">
+                <span class="text-gray-400">탐욕·공포:</span>
+                <span id="val-fng" class="font-bold text-amber-400">-- pt</span>
+                <span class="tooltip-box">얼터너티브(Alternative.me) 암호화폐 투자 심리 공포·탐욕 지수</span>
+            </div>
+            <div class="has-tooltip tooltip-bottom flex items-center space-x-1">
+                <span class="text-gray-400">Jev 확신도:</span>
+                <span id="val-news-conf" class="font-bold text-emerald-400">--%</span>
+                <span class="tooltip-box">외신 기사 분석 결과에 대한 인공지능의 확신도(Confidence)</span>
+            </div>
+            <div class="has-tooltip tooltip-bottom flex items-center space-x-1 px-2 py-0.5 rounded bg-black/40 border border-gray-800">
+                <span class="text-gray-400">블랙스완 위험:</span>
+                <span id="val-black-swan" class="font-bold text-emerald-400">0.0%</span>
+                <span class="tooltip-box">거래소 파산, 국가적 긴급 규제, 대형 해킹 등 예측 불가능한 시장 붕괴 위험도</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. UNIFIED MASTER SIGNAL & AI NEURAL NETWORK BOARD (상단 통합 시그널 패널) -->
     <section class="mt-2.5 grid grid-cols-1 lg:grid-cols-12 gap-2.5">
         
         <!-- Left: Core Wonyotti Verdict (6 Cols) -->
@@ -151,7 +237,11 @@
                 <!-- Signal Readiness Bar -->
                 <div class="mt-2.5 pt-2 border-t border-gray-800/60">
                     <div class="flex items-center justify-between text-[11px] text-gray-400 mb-1">
-                        <span>진입 준비도: <b id="readiness-long-text" class="text-emerald-400">0%</b> (롱) / <b id="readiness-short-text" class="text-rose-400">0%</b> (숏)</span>
+                        <span class="has-tooltip">
+                            <span>진입 준비도:</span>
+                            <span class="tooltip-box">워뇨띠 시그널 발생을 위해 필요한 거래량 폭발 및 호가 흡수 조건 충족률(%)</span>
+                            <b id="readiness-long-text" class="text-emerald-400 ml-1">0%</b> (롱) / <b id="readiness-short-text" class="text-rose-400">0%</b> (숏)
+                        </span>
                         <span id="readiness-mode-badge" class="px-1.5 py-0.2 rounded bg-gray-800 text-gray-400 font-mono text-[10px]">목표 62%</span>
                     </div>
                     <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden flex border border-gray-800">
@@ -169,12 +259,15 @@
         <!-- Right: 600MB Real-Trained ONNX Neural Network (6 Cols) -->
         <div class="lg:col-span-6 p-3 sm:p-4 rounded-2xl hud-card border-2 border-indigo-500/40 bg-gradient-to-br from-indigo-950/20 via-black to-slate-900/40 shadow-xl flex flex-col justify-between">
             <div>
-                <!-- Top Row: ONNX Model Header -->
+                <!-- Top Row: Model Header -->
                 <div class="flex items-center justify-between pb-2 border-b border-gray-800/80">
                     <div class="flex items-center space-x-2">
                         <span class="text-xl">🧠</span>
                         <span class="text-xs sm:text-sm font-black text-white uppercase tracking-wider">AI 신경망 직감 예측</span>
-                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold">600MB 실거래 전수학습</span>
+                        <span class="has-tooltip text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold">
+                            600MB 실거래 전수학습
+                            <span class="tooltip-box">워뇨띠의 실제 BitMEX 144만 건 체결 원본 데이터로 훈련된 모방 인공신경망</span>
+                        </span>
                     </div>
                     <div class="flex items-center space-x-1.5 text-xs font-mono">
                         <span class="text-gray-400">추론 속도:</span>
@@ -182,7 +275,7 @@
                     </div>
                 </div>
 
-                <!-- ONNX Action & Multi-Class Probability Distribution -->
+                <!-- Action & Multi-Class Probability Distribution -->
                 <div class="mt-2.5 grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
                     <!-- Action Badge -->
                     <div class="sm:col-span-5 bg-black/50 p-2.5 rounded-xl border border-gray-800 flex items-center justify-between">
@@ -193,7 +286,10 @@
                             </div>
                         </div>
                         <div class="text-right">
-                            <div class="text-[10px] text-gray-400 font-bold uppercase">확신도 / 배율</div>
+                            <div class="has-tooltip text-[10px] text-gray-400 font-bold uppercase">
+                                확신도 / 배율
+                                <span class="tooltip-box">AI 방향성 확신도(%) 및 켈리 베팅 공식 기반 최적 포지션 진입 배율</span>
+                            </div>
                             <div id="onnx-conf-text" class="text-xs sm:text-sm font-bold text-indigo-300 mono mt-0.5">--% / 1.0x</div>
                         </div>
                     </div>
@@ -221,21 +317,25 @@
 
                 <!-- Institutional Micro-Risk Chips -->
                 <div class="grid grid-cols-4 gap-1.5 mt-2.5 pt-2 border-t border-gray-800/60 text-[11px] font-mono">
-                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center has-tooltip">
                         <div class="text-[9px] text-gray-400">바닥 매수흡수</div>
                         <div id="val-bull-abs" class="font-bold text-emerald-400">0.00</div>
+                        <span class="tooltip-box">가격 급락 시 아래 호가창에서 고래가 던진 물량을 전부 받아먹은 매수 흡수 강도</span>
                     </div>
-                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center has-tooltip">
                         <div class="text-[9px] text-gray-400">고점 매도저항</div>
                         <div id="val-bear-abs" class="font-bold text-rose-400">0.00</div>
+                        <span class="tooltip-box">가격 급등 시 상단 매도벽에 대량 체결이 부딪히며 상승세가 꺾인 매도 저항 강도</span>
                     </div>
-                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center has-tooltip">
                         <div class="text-[9px] text-gray-400">변동성 위험</div>
                         <div id="val-regime-risk" class="font-bold text-white">NORMAL</div>
+                        <span class="tooltip-box">급격한 변동성 폭발로 인한 휩소(속임수 무빙) 위험 및 비정상 장세 여부 진단</span>
                     </div>
-                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center">
+                    <div class="bg-black/30 p-1.5 rounded-lg border border-gray-800 text-center has-tooltip">
                         <div class="text-[9px] text-gray-400">추세 효율비</div>
                         <div id="val-kaufman" class="font-bold text-amber-400">0.00</div>
+                        <span class="tooltip-box">카우프만 효율비(ER): 1에 가까울수록 매끄러운 단방향 추세, 0에 가까우면 횡보 노이즈</span>
                     </div>
                 </div>
             </div>
@@ -272,25 +372,29 @@
 
             <!-- 4 Quick Key Metrics Bar -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                <div class="hud-card p-2.5 rounded-xl">
+                <div class="hud-card p-2.5 rounded-xl has-tooltip">
                     <div class="text-[11px] text-gray-400 font-bold">거래량 터짐 지수</div>
                     <div id="metric-vol-z" class="text-base sm:text-lg font-black mono text-emerald-400 mt-0.5">+0.00</div>
                     <div class="text-[10px] text-gray-400 mt-0.5">> 2.0 고래 개입</div>
+                    <span class="tooltip-box">볼륨 Z-Score: 20봉 평균 대비 현재 거래량이 몇 배(표준편차) 급증했는지 나타냄 (>2.0 시 고래 개입)</span>
                 </div>
-                <div class="hud-card p-2.5 rounded-xl">
+                <div class="hud-card p-2.5 rounded-xl has-tooltip">
                     <div class="text-[11px] text-gray-400 font-bold">평소 대비 거래량</div>
                     <div id="metric-vol-exh" class="text-base sm:text-lg font-black mono text-white mt-0.5">1.00x</div>
                     <div class="text-[10px] text-gray-400 mt-0.5">20봉 평균 대비</div>
+                    <span class="tooltip-box">직전 20개 봉 평균 거래량 대비 현재 봉의 거래량이 몇 배(x) 폭발했는지 나타내는 배수</span>
                 </div>
-                <div class="hud-card p-2.5 rounded-xl">
+                <div class="hud-card p-2.5 rounded-xl has-tooltip">
                     <div class="text-[11px] text-gray-400 font-bold">추세선 이격도</div>
                     <div id="metric-trend-bias" class="text-base sm:text-lg font-black mono text-gray-300 mt-0.5">0.00%</div>
                     <div class="text-[10px] text-gray-400 mt-0.5">50선 기준 이격</div>
+                    <span class="tooltip-box">50선 단기 기준선 대비 현재 가격이 얼마나 벌어져(이격) 있는지 나타내는 지표</span>
                 </div>
-                <div class="hud-card p-2.5 rounded-xl">
+                <div class="hud-card p-2.5 rounded-xl has-tooltip">
                     <div class="text-[11px] text-gray-400 font-bold">1봉당 흔들기 폭</div>
                     <div id="metric-atr-pct" class="text-base sm:text-lg font-black mono text-amber-400 mt-0.5">1.00%</div>
                     <div class="text-[10px] text-gray-400 mt-0.5">평균 변동성 크기</div>
+                    <span class="tooltip-box">ATR %: 캔들 1개당 평균적인 고점-저점 변동 진폭. 손절 및 익절 폭 설정의 기준</span>
                 </div>
             </div>
         </section>
@@ -358,8 +462,9 @@
                         <span class="text-gray-400 font-sans">보유 경과:</span>
                         <span id="pos-holding-timer" class="font-bold mono text-emerald-400">00:00 (16.35분 기준)</span>
                     </div>
-                    <span id="pos-exit-rule-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <span id="pos-exit-rule-badge" class="has-tooltip px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                         60분 스크래치 탈출 대기
+                        <span class="tooltip-box">진입 후 60분이 지나도 지지부진하면 -0.4% 이내 약반등 시 본절 탈출하는 워뇨띠식 칼손실 방어 룰</span>
                     </span>
                 </div>
             </div>
@@ -371,13 +476,15 @@
                     <div class="flex items-center justify-between pb-2 border-b border-gray-800 text-xs">
                         <div class="flex items-center space-x-2">
                             <button id="tab-btn-live-trades" onclick="switchTradeTab('live')" 
-                                    class="px-2.5 py-1 rounded-lg font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center space-x-1">
+                                    class="has-tooltip px-2.5 py-1 rounded-lg font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center space-x-1">
                                 <span>⚡ 실시간 체결 장부</span>
                                 <span id="badge-live-trades-count" class="px-1.5 py-0.2 rounded-full bg-emerald-500/30 text-[9px] font-mono">5건</span>
+                                <span class="tooltip-box">워뇨-AI 엔진 신호 규칙에 따라 가상으로 진입하고 청산된 시뮬레이션 매매 일지</span>
                             </button>
                             <button id="tab-btn-legend-trades" onclick="switchTradeTab('legend')" 
-                                    class="px-2.5 py-1 rounded-lg font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1">
+                                    class="has-tooltip px-2.5 py-1 rounded-lg font-bold text-gray-400 hover:text-white border border-transparent hover:border-gray-700 flex items-center space-x-1">
                                 <span>🏆 2021 전설 복기</span>
+                                <span class="tooltip-box">2021년 부처빔 등 대폭락장에서 워뇨띠가 실제로 BitMEX에서 수천 BTC 수익을 냈던 역사적 실거래 기록</span>
                             </button>
                         </div>
                         <div class="text-[11px] font-mono text-gray-400 hidden sm:flex items-center space-x-2">
@@ -432,36 +539,6 @@
 
         </section>
     </main>
-
-    <!-- 4. SLIM FOOTER BAR: TYPESAFE JEV SYSTEM ONE LIVE NEWS TICKER & BLACK SWAN GUARD -->
-    <footer class="mt-2.5 hud-card px-3.5 py-2 rounded-xl flex flex-wrap items-center justify-between gap-2.5 text-xs border border-gray-800/80 shadow-md">
-        <!-- Left: Jev AI Engine Badge + Ticker -->
-        <div class="flex items-center space-x-2.5 min-w-0 flex-1">
-            <span class="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold shrink-0 text-[11px]">
-                <span>⚡ TypeSafe Jev AI</span>
-                <span id="news-engine-tag" class="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300">System One</span>
-            </span>
-            <div id="sb-news-ticker" class="text-gray-300 truncate text-[11px] flex items-center">
-                <span class="text-gray-400">외신 속보 및 감성 분석 로딩 중...</span>
-            </div>
-        </div>
-
-        <!-- Right: Fear & Greed + News Conf + Black Swan Risk -->
-        <div class="flex items-center space-x-3 shrink-0 text-[11px] font-mono">
-            <div class="hidden sm:flex items-center space-x-1">
-                <span class="text-gray-400">탐욕·공포:</span>
-                <span id="val-fng" class="font-bold text-amber-400">-- pt</span>
-            </div>
-            <div class="flex items-center space-x-1">
-                <span class="text-gray-400">Jev 확신도:</span>
-                <span id="val-news-conf" class="font-bold text-emerald-400">--%</span>
-            </div>
-            <div class="flex items-center space-x-1 px-2 py-0.5 rounded bg-black/40 border border-gray-800">
-                <span class="text-gray-400">블랙스완 위험:</span>
-                <span id="val-black-swan" class="font-bold text-emerald-400">0.0%</span>
-            </div>
-        </div>
-    </footer>
 
     <!-- Hidden Elements to preserve backwards-compatible JS binds -->
     <div class="hidden">
