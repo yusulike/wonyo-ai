@@ -360,14 +360,23 @@
                         <span id="chart-timeframe-tag" class="text-xs px-2 py-0.5 rounded bg-gray-800 text-emerald-400 mono font-bold">15M</span>
                         <span class="text-[11px] px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-700/50 font-mono font-bold">KST</span>
                     </div>
-                    <div class="flex items-center space-x-3 text-xs font-medium">
+                    <div class="flex items-center flex-wrap gap-x-2.5 gap-y-1 text-xs font-medium">
                         <div class="flex items-center space-x-1.5">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                            <span class="text-gray-300">바닥 매수 흡수</span>
+                            <span class="text-gray-300 text-[11px]">매수흡수</span>
                         </div>
                         <div class="flex items-center space-x-1.5">
                             <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                            <span class="text-gray-300">고점 매도 저항</span>
+                            <span class="text-gray-300 text-[11px]">매도저항</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">🟢 롱체결</span>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <span class="text-[10px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold">🔴 숏체결</span>
+                        </div>
+                        <div class="hidden sm:flex items-center space-x-1">
+                            <span class="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40 font-mono">📍 실시간 주문선</span>
                         </div>
                     </div>
                 </div>
@@ -605,9 +614,274 @@
         let currentMode = 'live';
         let currentInterval = '15m';
         let currentSensitivity = 'standard';
+        let currentTradeTab = 'live';
         let chart = null;
         let candleSeries = null;
         let volumeSeries = null;
+
+        // Visual Trading States for Chart
+        let currentCandleData = [];
+        let currentLiveTrades = [];
+        let currentLegendTrades = [];
+        let activePriceLines = [];
+
+        // Clear active order price lines (Entry, TP, SL)
+        function clearActivePriceLines() {
+            if (candleSeries && activePriceLines.length > 0) {
+                activePriceLines.forEach(line => {
+                    try {
+                        candleSeries.removePriceLine(line);
+                    } catch (e) {}
+                });
+                activePriceLines = [];
+            }
+        }
+
+        // Draw live active position & order plan horizontal price lines on chart
+        function updateActivePriceLines(plan, action, curPx) {
+            if (!candleSeries || !plan) return;
+            clearActivePriceLines();
+
+            try {
+                const isTradeActive = (action === 'BUY' || action === 'SELL');
+                const entryPx = plan.target_limit_price || 0;
+                const tpPx = plan.take_profit_price || 0;
+                const slPx = plan.stop_loss_price || 0;
+
+                if (isTradeActive && entryPx > 0) {
+                    // 1. Entry Price Line (Sky Blue)
+                    const entryLine = candleSeries.createPriceLine({
+                        price: entryPx,
+                        color: '#38bdf8',
+                        lineWidth: 2,
+                        lineStyle: LightweightCharts.LineStyle.Dotted,
+                        axisLabelVisible: true,
+                        title: `📍 [${action === 'BUY' ? '롱' : '숏'} 진입가] $${entryPx.toLocaleString()}`
+                    });
+                    activePriceLines.push(entryLine);
+
+                    // 2. Take Profit Line (Emerald Green)
+                    if (tpPx > 0) {
+                        const tpLine = candleSeries.createPriceLine({
+                            price: tpPx,
+                            color: '#10b981',
+                            lineWidth: 2,
+                            lineStyle: LightweightCharts.LineStyle.Dashed,
+                            axisLabelVisible: true,
+                            title: `🎯 [1차 익절 +1.2%] $${tpPx.toLocaleString()}`
+                        });
+                        activePriceLines.push(tpLine);
+                    }
+
+                    // 3. Stop Loss Guard Line (Rose Red)
+                    if (slPx > 0) {
+                        const slLine = candleSeries.createPriceLine({
+                            price: slPx,
+                            color: '#f43f5e',
+                            lineWidth: 2,
+                            lineStyle: LightweightCharts.LineStyle.Dashed,
+                            axisLabelVisible: true,
+                            title: `🛑 [동적 손절 -1.4%] $${slPx.toLocaleString()}`
+                        });
+                        activePriceLines.push(slLine);
+                    }
+                } else if (entryPx > 0) {
+                    // Waiting Limit Order Line (Indigo Dotted)
+                    const waitLine = candleSeries.createPriceLine({
+                        price: entryPx,
+                        color: '#818cf8',
+                        lineWidth: 1,
+                        lineStyle: LightweightCharts.LineStyle.Dotted,
+                        axisLabelVisible: true,
+                        title: `⏳ [눌림목 지정가 대기] $${entryPx.toLocaleString()}`
+                    });
+                    activePriceLines.push(waitLine);
+                }
+            } catch (e) {
+                console.warn("Failed to create price lines:", e);
+            }
+        }
+
+        // Render both Microstructure Absorption Markers AND Real Executed Trade Markers on Chart
+        function updateChartTradeVisuals() {
+            if (!candleSeries || currentCandleData.length === 0) return;
+
+            const markers = [];
+            const candleTimes = currentCandleData.map(c => c.time);
+
+            // 1. Base Absorption Markers (High resolution volume absorption)
+            currentCandleData.forEach(c => {
+                if (c.bull_abs > 1.2) {
+                    markers.push({
+                        time: c.time,
+                        position: 'belowBar',
+                        color: '#10b981',
+                        shape: 'arrowUp',
+                        text: '매수흡수'
+                    });
+                } else if (c.bear_abs > 1.2) {
+                    markers.push({
+                        time: c.time,
+                        position: 'aboveBar',
+                        color: '#f43f5e',
+                        shape: 'arrowDown',
+                        text: '매도저항'
+                    });
+                }
+            });
+
+            // 2. Real-Time Executed Trade Markers from Ledger
+            const trades = (currentTradeTab === 'live') ? currentLiveTrades : currentLegendTrades;
+            if (Array.isArray(trades) && trades.length > 0) {
+                trades.forEach(t => {
+                    const timeStr = t.timestamp_kst || t.time_kst || t.timestamp;
+                    if (!timeStr) return;
+
+                    let tradeEpoch = null;
+                    try {
+                        const cleaned = timeStr.replace(' KST', '').trim();
+                        const parts = cleaned.split(' ');
+                        if (parts.length >= 2) {
+                            const dParts = parts[0].split('-');
+                            const tParts = parts[1].split(':');
+                            if (dParts.length === 3 && tParts.length >= 2) {
+                                tradeEpoch = Math.floor(Date.UTC(
+                                    parseInt(dParts[0]),
+                                    parseInt(dParts[1]) - 1,
+                                    parseInt(dParts[2]),
+                                    parseInt(tParts[0]),
+                                    parseInt(tParts[1])
+                                ) / 1000);
+                            }
+                        } else if (parts.length === 1 && parts[0].includes('-')) {
+                            const dParts = parts[0].split('-');
+                            if (dParts.length === 3) {
+                                tradeEpoch = Math.floor(Date.UTC(
+                                    parseInt(dParts[0]),
+                                    parseInt(dParts[1]) - 1,
+                                    parseInt(dParts[2]),
+                                    12, 0
+                                ) / 1000);
+                            }
+                        }
+                    } catch (err) {}
+
+                    if (!tradeEpoch) return;
+
+                    // Match closest candle time
+                    let closest = null;
+                    let minDiff = Infinity;
+                    for (let i = 0; i < candleTimes.length; i++) {
+                        const diff = Math.abs(candleTimes[i] - tradeEpoch);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            closest = candleTimes[i];
+                        }
+                    }
+
+                    // If matched within candle range (up to 4 hours)
+                    if (closest && minDiff <= 14400) {
+                        const side = (t.side || t.direction || 'LONG').toUpperCase();
+                        const pnl = t.pnl_pct ?? 0;
+                        const isProfit = pnl >= 0;
+                        const pnlText = `${isProfit ? '+' : ''}${pnl.toFixed(1)}%`;
+                        const pxText = t.entry_price ? `$${Math.round(t.entry_price).toLocaleString()}` : '';
+
+                        if (side === 'LONG') {
+                            markers.push({
+                                time: closest,
+                                position: 'belowBar',
+                                color: isProfit ? '#00ff88' : '#ff3366',
+                                shape: 'arrowUp',
+                                text: `🟢 롱 체결 ${pnlText} (${pxText})`
+                            });
+                        } else {
+                            markers.push({
+                                time: closest,
+                                position: 'aboveBar',
+                                color: isProfit ? '#00ff88' : '#ff3366',
+                                shape: 'arrowDown',
+                                text: `🔴 숏 체결 ${pnlText} (${pxText})`
+                            });
+                        }
+                    }
+                });
+            }
+
+            // Strictly sort by time ascending (Lightweight Charts requirement)
+            markers.sort((a, b) => a.time - b.time);
+
+            // Deduplicate same timestamp + same text
+            const uniqueMarkers = [];
+            const seen = new Set();
+            markers.forEach(m => {
+                const key = `${m.time}_${m.text}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    uniqueMarkers.push(m);
+                }
+            });
+
+            try {
+                candleSeries.setMarkers(uniqueMarkers);
+            } catch (e) {
+                console.warn("setMarkers error:", e);
+            }
+        }
+
+        // Click trade row to smoothly focus and center on that candle
+        function focusTradeOnChart(timeStr) {
+            if (!chart || !currentCandleData.length || !timeStr) return;
+            try {
+                const cleaned = timeStr.replace(' KST', '').trim();
+                const parts = cleaned.split(' ');
+                let tradeEpoch = null;
+                if (parts.length >= 2) {
+                    const dParts = parts[0].split('-');
+                    const tParts = parts[1].split(':');
+                    if (dParts.length === 3 && tParts.length >= 2) {
+                        tradeEpoch = Math.floor(Date.UTC(
+                            parseInt(dParts[0]),
+                            parseInt(dParts[1]) - 1,
+                            parseInt(dParts[2]),
+                            parseInt(tParts[0]),
+                            parseInt(tParts[1])
+                        ) / 1000);
+                    }
+                } else if (parts.length === 1 && parts[0].includes('-')) {
+                    const dParts = parts[0].split('-');
+                    if (dParts.length === 3) {
+                        tradeEpoch = Math.floor(Date.UTC(
+                            parseInt(dParts[0]),
+                            parseInt(dParts[1]) - 1,
+                            parseInt(dParts[2]),
+                            12, 0
+                        ) / 1000);
+                    }
+                }
+
+                if (tradeEpoch) {
+                    let targetIdx = -1;
+                    let minDiff = Infinity;
+                    for (let i = 0; i < currentCandleData.length; i++) {
+                        const diff = Math.abs(currentCandleData[i].time - tradeEpoch);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            targetIdx = i;
+                        }
+                    }
+
+                    if (targetIdx >= 0) {
+                        chart.timeScale().setVisibleLogicalRange({
+                            from: Math.max(0, targetIdx - 15),
+                            to: Math.min(currentCandleData.length - 1, targetIdx + 15)
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn("focusTradeOnChart error:", e);
+            }
+        }
 
         const WONYO_QUOTES = [
             "거래량 터지기 전까진 억지로 매매 자리 만들지 마세요. 뇌동매매 멈추고 산책이나 다녀오세요.",
@@ -632,6 +906,7 @@
 
         // --- 2-Tab Switcher ---
         function switchTradeTab(tab) {
+            currentTradeTab = tab;
             const btnLive = document.getElementById('tab-btn-live-trades');
             const btnLegend = document.getElementById('tab-btn-legend-trades');
             const contLive = document.getElementById('tab-content-live');
@@ -648,6 +923,7 @@
                 if (contLegend) contLegend.classList.remove('hidden');
                 if (contLive) contLive.classList.add('hidden');
             }
+            updateChartTradeVisuals();
         }
 
         // --- Tooltip & Mobile Bottom Sheet Controller ---
@@ -821,6 +1097,7 @@
                         const timeB = b.timestamp_kst || b.time_kst || '';
                         return timeB.localeCompare(timeA);
                     });
+                    currentLiveTrades = data.live_trades;
                     liveTbody.innerHTML = data.live_trades.slice(0, 5).map(t => {
                         const side = (t.side || t.direction || 'LONG').toUpperCase();
                         const rawTime = t.timestamp_kst || t.time_kst || '--';
@@ -846,14 +1123,14 @@
                         const posColor = side === 'LONG' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
                         const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
                         return `
-                            <tr class="hover:bg-gray-800/40 transition">
+                            <tr onclick="focusTradeOnChart('${rawTime}')" class="hover:bg-emerald-950/20 cursor-pointer transition group" title="클릭 시 차트에서 해당 체결 위치로 이동">
                                 <td class="py-1.5 px-1">${timeHtml}</td>
                                 <td class="py-1.5 px-1">
                                     <span class="px-1.5 py-0.2 rounded text-[10px] font-bold border ${posColor}">
                                         ${side} ${leverage}x
                                     </span>
                                 </td>
-                                <td class="py-1.5 px-1 font-mono text-gray-300">$${entryPx}</td>
+                                <td class="py-1.5 px-1 font-mono text-gray-300 group-hover:text-emerald-300">$${entryPx}</td>
                                 <td class="py-1.5 px-1 text-gray-300 truncate max-w-[100px]">${exitReason}</td>
                                 <td class="py-1.5 px-1 font-bold ${pnlColor}">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%</td>
                             </tr>
@@ -864,17 +1141,19 @@
                 // 2. Legendary Trades Tbody
                 const legendTbody = document.getElementById('legend-trades-tbody');
                 if (legendTbody && Array.isArray(data.legendary_trades)) {
+                    currentLegendTrades = data.legendary_trades;
                     legendTbody.innerHTML = data.legendary_trades.slice(0, 5).map(t => {
                         const isProfit = (t.pnl_btc ?? 0) >= 0;
                         const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
+                        const timeStr = t.timestamp_kst || t.timestamp;
                         return `
-                            <tr class="hover:bg-gray-800/40 transition">
+                            <tr onclick="focusTradeOnChart('${timeStr}')" class="hover:bg-amber-950/20 cursor-pointer transition group" title="클릭 시 차트에서 해당 체결 위치로 이동">
                                 <td class="py-1.5 px-1 text-gray-400">${t.timestamp}</td>
-                                <td class="py-1.5 px-1 font-bold text-gray-200">${t.title}</td>
+                                <td class="py-1.5 px-1 font-bold text-gray-200 group-hover:text-amber-300">${t.title}</td>
                                 <td class="py-1.5 px-1 text-cyan-400">${t.action}</td>
                                 <td class="py-1.5 px-1 font-bold ${pnlColor}">${t.pnl_btc >= 0 ? '+' : ''}${t.pnl_btc} BTC</td>
                                 <td class="py-1.5 px-1 text-right">
-                                    <button onclick="setMode('replay')" class="px-1.5 py-0.5 rounded bg-gray-800 text-[10px] text-amber-300 border border-gray-700 hover:border-amber-400">보기</button>
+                                    <button onclick="event.stopPropagation(); setMode('replay'); focusTradeOnChart('${timeStr}');" class="px-1.5 py-0.5 rounded bg-gray-800 text-[10px] text-amber-300 border border-gray-700 hover:border-amber-400">보기</button>
                                 </td>
                             </tr>
                         `;
@@ -895,6 +1174,9 @@
                     const tag = document.getElementById('db-storage-tag');
                     if (tag) tag.textContent = data.storage_type.includes('Postgres') ? 'Vercel Postgres' : 'SQLite DB';
                 }
+
+                // Render trade markers on candlestick chart
+                updateChartTradeVisuals();
             } catch (e) {
                 console.error("Trades ledger error:", e);
             }
@@ -955,46 +1237,36 @@
         // --- Independent Parallel Data Loaders for Instant Rendering ---
         async function loadCandles() {
             try {
-                const cUrl = `/api/candles?mode=${currentMode}&interval=${currentInterval}&limit=100`;
+                const cUrl = `/api/candles?mode=${currentMode}&interval=${currentInterval}&limit=200`;
                 const resCandles = await fetch(cUrl);
                 const dataCandles = await resCandles.json();
 
                 if (dataCandles.status === 'SUCCESS' && candleSeries && volumeSeries && Array.isArray(dataCandles.candles)) {
                     const cData = [];
                     const vData = [];
-                    const markers = [];
 
                     dataCandles.candles.forEach(c => {
                         const kstTime = c.time + 32400; // +9h KST
-                        cData.push({ time: kstTime, open: c.open, high: c.high, low: c.low, close: c.close });
+                        cData.push({
+                            time: kstTime,
+                            open: c.open,
+                            high: c.high,
+                            low: c.low,
+                            close: c.close,
+                            bull_abs: c.bull_abs,
+                            bear_abs: c.bear_abs
+                        });
                         vData.push({
                             time: kstTime,
                             value: c.volume,
                             color: c.close >= c.open ? 'rgba(16, 185, 129, 0.5)' : 'rgba(244, 63, 94, 0.5)'
                         });
-
-                        if (c.bull_abs > 1.2) {
-                            markers.push({
-                                time: kstTime,
-                                position: 'belowBar',
-                                color: '#10b981',
-                                shape: 'arrowUp',
-                                text: '매수흡수'
-                            });
-                        } else if (c.bear_abs > 1.2) {
-                            markers.push({
-                                time: kstTime,
-                                position: 'aboveBar',
-                                color: '#f43f5e',
-                                shape: 'arrowDown',
-                                text: '매도저항'
-                            });
-                        }
                     });
 
+                    currentCandleData = cData;
                     candleSeries.setData(cData);
                     volumeSeries.setData(vData);
-                    candleSeries.setMarkers(markers);
+                    updateChartTradeVisuals();
                     chart.timeScale().fitContent();
 
                     // Instantly update live price header if not set yet
@@ -1273,10 +1545,16 @@
 
                 updateNewsTicker(nf.top_headlines, nf.fear_greed_score, nf.fear_greed_label);
             }
+
+            // Visual: Update Active Order & Position Price Lines on Candlestick Chart
+            if (plan) {
+                updateActivePriceLines(plan, pred.action, curPx);
+            }
         }
 
         function setMode(mode) {
             currentMode = mode;
+            clearActivePriceLines();
             const btnLive = document.getElementById('btn-mode-live');
             const btnReplay = document.getElementById('btn-mode-replay');
             const indicator = document.getElementById('live-indicator');
