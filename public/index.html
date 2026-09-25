@@ -433,6 +433,36 @@
         </section>
     </main>
 
+    <!-- 4. SLIM FOOTER BAR: TYPESAFE JEV SYSTEM ONE LIVE NEWS TICKER & BLACK SWAN GUARD -->
+    <footer class="mt-2.5 hud-card px-3.5 py-2 rounded-xl flex flex-wrap items-center justify-between gap-2.5 text-xs border border-gray-800/80 shadow-md">
+        <!-- Left: Jev AI Engine Badge + Ticker -->
+        <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+            <span class="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold shrink-0 text-[11px]">
+                <span>⚡ TypeSafe Jev AI</span>
+                <span id="news-engine-tag" class="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300">System One</span>
+            </span>
+            <div id="sb-news-ticker" class="text-gray-300 truncate text-[11px] flex items-center">
+                <span class="text-gray-400">외신 속보 및 감성 분석 로딩 중...</span>
+            </div>
+        </div>
+
+        <!-- Right: Fear & Greed + News Conf + Black Swan Risk -->
+        <div class="flex items-center space-x-3 shrink-0 text-[11px] font-mono">
+            <div class="hidden sm:flex items-center space-x-1">
+                <span class="text-gray-400">탐욕·공포:</span>
+                <span id="val-fng" class="font-bold text-amber-400">-- pt</span>
+            </div>
+            <div class="flex items-center space-x-1">
+                <span class="text-gray-400">Jev 확신도:</span>
+                <span id="val-news-conf" class="font-bold text-emerald-400">--%</span>
+            </div>
+            <div class="flex items-center space-x-1 px-2 py-0.5 rounded bg-black/40 border border-gray-800">
+                <span class="text-gray-400">블랙스완 위험:</span>
+                <span id="val-black-swan" class="font-bold text-emerald-400">0.0%</span>
+            </div>
+        </div>
+    </footer>
+
     <!-- Hidden Elements to preserve backwards-compatible JS binds -->
     <div class="hidden">
         <span id="wonyo-level-badge"></span>
@@ -455,15 +485,11 @@
         <div id="ext-desc"></div>
         <div id="news-badge"></div>
         <div id="news-desc"></div>
-        <div id="val-fng"></div>
         <div id="val-attention"></div>
-        <div id="val-news-conf"></div>
-        <div id="news-engine-tag"></div>
         <div id="bar-bull-abs"></div>
         <div id="bar-bear-abs"></div>
         <div id="sb-vol-status"></div>
         <div id="sb-ext-status"></div>
-        <div id="sb-news-ticker"></div>
         <div id="ladder-1-px"></div>
         <div id="ladder-2-px"></div>
         <div id="ladder-3-px"></div>
@@ -521,6 +547,52 @@
                 if (contLegend) contLegend.classList.remove('hidden');
                 if (contLive) contLive.classList.add('hidden');
             }
+        }
+
+        // --- TypeSafe Jev System One News Ticker ---
+        let newsTickerInterval = null;
+        let newsHeadlines = [];
+        let currentHeadlineIdx = 0;
+
+        function updateNewsTicker(headlines, fngScore, fngLabel) {
+            const tickerEl = document.getElementById('sb-news-ticker');
+            if (!tickerEl) return;
+
+            if (headlines && headlines.length > 0) {
+                newsHeadlines = headlines;
+            }
+
+            if (newsTickerInterval) {
+                clearInterval(newsTickerInterval);
+                newsTickerInterval = null;
+            }
+
+            const renderHeadline = () => {
+                if (newsHeadlines.length === 0) return;
+                const item = newsHeadlines[currentHeadlineIdx % newsHeadlines.length];
+                const confText = (item.confidence && item.confidence > 0) ? ` ${Math.round(item.confidence * 100)}%` : '';
+                const sentTag = item.is_bullish 
+                    ? `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px] mr-1.5 shrink-0">호재${confText}</span>` 
+                    : item.is_bearish 
+                    ? `<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold text-[10px] mr-1.5 shrink-0">악재${confText}</span>`
+                    : '<span class="px-1.5 py-0.5 rounded bg-gray-700/60 text-gray-300 font-bold text-[10px] mr-1.5 shrink-0">속보</span>';
+
+                tickerEl.style.opacity = '0';
+                tickerEl.style.transition = 'opacity 0.25s ease';
+                setTimeout(() => {
+                    tickerEl.innerHTML = `
+                        <a href="${item.link || '#'}" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-300 transition truncate flex items-center">
+                            ${sentTag}
+                            <span class="truncate font-sans text-gray-300 hover:underline">[${item.source}] ${item.title}</span>
+                        </a>
+                    `;
+                    tickerEl.style.opacity = '1';
+                }, 250);
+                currentHeadlineIdx++;
+            };
+
+            renderHeadline();
+            newsTickerInterval = setInterval(renderHeadline, 3500);
         }
 
         // --- Load Trades Ledger from /api/trades ---
@@ -921,6 +993,32 @@
             document.getElementById('metric-vol-exh').textContent = `${wonyo.volume_exhaustion}x`;
             document.getElementById('metric-trend-bias').textContent = `${wonyo.trend_bias >= 0 ? '+' : ''}${wonyo.trend_bias}%`;
             document.getElementById('metric-atr-pct').textContent = `${wonyo.atr_pct}%`;
+
+            // 4. TYPESAFE JEV SYSTEM ONE LIVE NEWS & ATTENTION
+            const nf = iv ? iv.news_factor : null;
+            if (nf) {
+                const valFng = document.getElementById('val-fng');
+                const valNewsConf = document.getElementById('val-news-conf');
+                const valBlackSwan = document.getElementById('val-black-swan');
+                const newsEngineTag = document.getElementById('news-engine-tag');
+
+                if (valFng) valFng.textContent = `${nf.fear_greed_score}pt (${nf.fear_greed_label})`;
+                if (valNewsConf && nf.avg_confidence) valNewsConf.textContent = `${Math.round(nf.avg_confidence * 100)}%`;
+                if (valBlackSwan) {
+                    const bsPct = (nf.black_swan_risk ? (nf.black_swan_risk * 100).toFixed(1) : '0.0');
+                    valBlackSwan.textContent = `${bsPct}%`;
+                    if (parseFloat(bsPct) > 25.0) {
+                        valBlackSwan.className = 'font-bold text-rose-400 animate-pulse';
+                    } else {
+                        valBlackSwan.className = 'font-bold text-emerald-400';
+                    }
+                }
+                if (newsEngineTag && nf.engine) {
+                    newsEngineTag.textContent = nf.engine.includes('Jev') ? 'System One' : 'Lexicon';
+                }
+
+                updateNewsTicker(nf.top_headlines, nf.fear_greed_score, nf.fear_greed_label);
+            }
         }
 
         function setMode(mode) {
