@@ -6,6 +6,7 @@ Supports Vercel Postgres (Neon Serverless PostgreSQL via pg8000) with automatic 
 import os
 import sys
 import ssl
+import time
 import logging
 from pathlib import Path
 from urllib.parse import urlparse
@@ -364,7 +365,7 @@ class WonyoDBManager:
         now_kst = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M")
         ts = trade.get("timestamp_kst") or trade.get("time_kst") or now_kst
         trade_data = {
-            "id": trade.get("id", f"TRD-{int(os.times().elapsed * 1000)}"),
+            "id": trade.get("id", f"TRD-{int(time.time() * 1000)}"),
             "time_kst": ts,
             "timestamp_kst": ts,
             "direction": trade.get("direction") or trade.get("side", "LONG"),

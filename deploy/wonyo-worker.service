@@ -1,0 +1,28 @@
+# Wonyo-AI 24/7 Trading Worker - systemd unit
+# Install (Linux personal server):
+#   sudo cp deploy/wonyo-worker.service /etc/systemd/system/
+#   sudo nano /etc/systemd/system/wonyo-worker.service   # fill User/WorkingDirectory/POSTGRES_URL
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now wonyo-worker
+#   journalctl -u wonyo-worker -f                        # live logs
+
+[Unit]
+Description=Wonyo-AI 24/7 Trading Worker (virtual position engine + ledger recorder)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# TODO: your linux username
+User=youruser
+# TODO: path where you cloned the repo
+WorkingDirectory=/opt/wonyo-ai
+# TODO: Neon/Vercel Postgres connection string (Vercel dashboard -> Storage -> Connect).
+# Omit to run on local SQLite instead.
+Environment=POSTGRES_URL=postgresql://user:password@host/dbname?sslmode=require
+ExecStart=/opt/wonyo-ai/.venv/bin/python -m src.worker
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
