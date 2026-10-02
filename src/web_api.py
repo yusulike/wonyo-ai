@@ -91,13 +91,15 @@ def fetch_live_binance_candles(interval: str = "15m", limit: int = 150) -> pd.Da
         _candle_cache[cache_key] = (time.monotonic(), df)
     return df
 
-# Replay dataset shipped with the deployment (bundled via vercel.json includeFiles).
+# Replay dataset: full parquet locally; on Vercel the embedded module (a git-tracked
+# Python file inside src/, bundled via import tracing like wonyo_nn_model.onnx)
+# guarantees availability where file-based bundling of data/ proved unreliable.
 REPLAY_PARQUET = "data/candles/bitmex_2021_q2_15m.parquet"
+REPLAY_WINDOW_START = 4500  # May 17-24, 2021 crash & rebound section
 
 def load_replay_candles(limit: int = 150) -> pd.DataFrame:
-    """Load historical crash/rebound candles from 2021 BitMEX dataset.
-    Resolves the parquet relative to this module so it works from any CWD
-    and inside the Vercel serverless bundle; falls back to live data."""
+    """Load historical crash/rebound candles from the 2021 BitMEX dataset.
+    Resolution order: local parquet -> embedded module (serverless) -> live fetch."""
     src_dir = Path(__file__).resolve().parent
     candidates = [
         src_dir.parent / REPLAY_PARQUET,  # project root (local dev)
@@ -108,8 +110,16 @@ def load_replay_candles(limit: int = 150) -> pd.DataFrame:
         if path.exists():
             df = pd.read_parquet(path)
             # Grab a famous volatile section (May 19-21, 2021)
-            sub_df = df.iloc[4500:4500+limit].copy().reset_index(drop=True)
+            sub_df = df.iloc[REPLAY_WINDOW_START:REPLAY_WINDOW_START+limit].copy().reset_index(drop=True)
             return sub_df
+
+    # Serverless fallback: embedded window (import-traced, always present in the bundle)
+    from src.replay_data import REPLAY_CANDLES
+    df = pd.DataFrame(REPLAY_CANDLES[:limit])
+    if len(df) > 0:
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        return df
+
     return fetch_live_binance_candles(interval="15m", limit=limit)
 
 @app.get("/api/predict")
