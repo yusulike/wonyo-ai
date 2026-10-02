@@ -12,7 +12,7 @@ summary = con.sql("""
         avg(pnl_pct) as avg_pnl_pct,
         sum(pnl_btc) as sum_pnl_btc,
         avg(bars_held) as avg_bars_held
-    FROM 'src/simulated_trades_15m.csv'
+    FROM 'artifacts/simulated_trades_15m.csv'
     GROUP BY exit_reason
     ORDER BY count DESC
 """).df()
@@ -26,7 +26,7 @@ side_perf = con.sql("""
         round(count(CASE WHEN pnl_pct > 0 THEN 1 END) * 100.0 / count(*), 2) as win_rate_pct,
         avg(pnl_pct) as avg_pnl_pct,
         sum(pnl_btc) as sum_pnl_btc
-    FROM 'src/simulated_trades_15m.csv'
+    FROM 'artifacts/simulated_trades_15m.csv'
     GROUP BY direction
 """).df()
 print(side_perf)

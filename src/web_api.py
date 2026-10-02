@@ -5,6 +5,8 @@ and 4-tier risk status for institutional & web users.
 """
 
 import sys
+import threading
+import time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -37,8 +39,21 @@ model = WonyoAIModel(risk_engine=risk_engine, confidence_threshold=0.55)
 extractor = WonyoFeatureExtractor()
 onnx_predictor = WonyoONNXPredictor()
 
+# Short-TTL cache for live candle fetches: collapses redundant Binance calls from
+# concurrent /api/predict + /api/candles polling within the same refresh window.
+_CANDLE_CACHE_TTL_SEC = 8.0
+_candle_cache: Dict[str, Any] = {}
+_candle_cache_lock = threading.Lock()
+
 def fetch_live_binance_candles(interval: str = "15m", limit: int = 150) -> pd.DataFrame:
-    """Fetch live candles from Binance public API, with automatic Binance.US fallback for US servers (Vercel)."""
+    """Fetch live candles from Binance public API, with automatic Binance.US fallback for US servers (Vercel).
+    Results are cached per (interval, limit) for a few seconds to absorb burst polling."""
+    cache_key = f"{interval}:{limit}"
+    with _candle_cache_lock:
+        hit = _candle_cache.get(cache_key)
+        if hit is not None and (time.monotonic() - hit[0]) < _CANDLE_CACHE_TTL_SEC:
+            return hit[1]
+
     endpoints = [
         f"https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval={interval}&limit={limit}",
         f"https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval={interval}&limit={limit}",
@@ -72,17 +87,30 @@ def fetch_live_binance_candles(interval: str = "15m", limit: int = 150) -> pd.Da
             "volume": float(item[5])
         })
     df = pd.DataFrame(rows)
+    with _candle_cache_lock:
+        _candle_cache[cache_key] = (time.monotonic(), df)
     return df
 
+# Replay dataset shipped with the deployment (bundled via vercel.json includeFiles).
+REPLAY_PARQUET = "data/candles/bitmex_2021_q2_15m.parquet"
+
 def load_replay_candles(limit: int = 150) -> pd.DataFrame:
-    """Load historical crash/rebound candles from 2021 BitMEX dataset."""
-    path = "src/bitmex_2021_q2_15m.parquet"
-    if Path(path).exists():
-        df = pd.read_parquet(path)
-        # Grab a famous volatile section (May 19-21, 2021)
-        sub_df = df.iloc[4500:4500+limit].copy().reset_index(drop=True)
-        return sub_df
-    return fetch_live_binance_candles(limit=limit)
+    """Load historical crash/rebound candles from 2021 BitMEX dataset.
+    Resolves the parquet relative to this module so it works from any CWD
+    and inside the Vercel serverless bundle; falls back to live data."""
+    src_dir = Path(__file__).resolve().parent
+    candidates = [
+        src_dir.parent / REPLAY_PARQUET,  # project root (local dev)
+        src_dir / REPLAY_PARQUET,         # bundled flat next to module (serverless)
+        Path(REPLAY_PARQUET),             # CWD-relative
+    ]
+    for path in candidates:
+        if path.exists():
+            df = pd.read_parquet(path)
+            # Grab a famous volatile section (May 19-21, 2021)
+            sub_df = df.iloc[4500:4500+limit].copy().reset_index(drop=True)
+            return sub_df
+    return fetch_live_binance_candles(interval="15m", limit=limit)
 
 @app.get("/api/predict")
 @app.get("/api/predict/")

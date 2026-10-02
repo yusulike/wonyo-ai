@@ -215,13 +215,19 @@ wonyo-ai/
 │   ├── db.py                   # Vercel Postgres / SQLite 영구 체결 장부 매니저
 │   ├── service_engine.py       # 3단 래더 및 리스크 가드 서비스 엔진
 │   ├── risk_engine.py          # 4대 리스크 인풋 벡터 및 켈리 사이징 계산기
+│   ├── wonyo_model.py          # 볼륨 흡수 기반 워뇨띠 휴리스틱 행동 모델
 │   ├── feature_extractor.py    # 12대 퀀트 및 오더플로우 지표 추출기
+│   ├── backtester.py           # 메이커 리베이트 반영 백테스터
 │   ├── web_api.py              # FastAPI 메인 웹 애플리케이션
 │   ├── test_onnx_inference.py  # ONNX 추론 지연시간 벤치마크 스크립트
 │   └── test_predict_api.py     # TypeSafe Jev 및 API 예측 응답 검증 스크립트
+├── data/candles/               # 시장 캔들 parquet 데이터 (git 추적 제외)
+├── artifacts/                  # 시뮬레이션 산출물 (티어시트·차트·트레이드 로그)
 ├── tests/                      # 자동화 테스트 스위트
 │   ├── test_db.py              # 영구 데이터베이스 및 폴백 로직 검증
 │   ├── test_onnx.py            # ONNX 추론 정확성 및 입출력 규격 검증
+│   ├── test_model.py           # 휴리스틱 행동 모델 단위 테스트
+│   ├── test_service_engine.py  # 서비스 엔진 테스트
 │   ├── test_risk_engine.py     # 켈리 공식 및 리스크 한도 검증
 │   └── test_web_api.py         # 웹 API 엔드포인트 및 서버리스 핸들러 테스트
 ├── pyproject.toml              # 프로젝트 메타데이터 및 uv 패키지 정의

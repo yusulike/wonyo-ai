@@ -21,7 +21,7 @@ def main():
     print("=================================================================")
 
     # 1. Load continuous market dataset
-    data_path = "src/bitmex_2021_1h.parquet"
+    data_path = "data/candles/bitmex_2021_1h.parquet"
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Missing {data_path}")
 
@@ -78,7 +78,7 @@ def main():
     print("=================================================================")
 
     # Save Tear Sheet to JSON
-    with open("src/wonyo_tear_sheet.json", "w") as f:
+    with open("artifacts/wonyo_tear_sheet.json", "w") as f:
         json.dump(ts, f, indent=2)
 
     # Plot Equity Curve & Drawdown
@@ -98,7 +98,7 @@ def main():
     ax2.legend(loc='lower left')
 
     plt.tight_layout()
-    chart_path = "src/wonyo_performance_chart.png"
+    chart_path = "artifacts/wonyo_performance_chart.png"
     plt.savefig(chart_path, dpi=200)
     plt.close()
     print(f"\nSaved institutional performance chart to {chart_path}")
@@ -107,7 +107,7 @@ def main():
     if len(tr) > 0:
         print("\nSample Trades:")
         print(tr.head(10)[["direction", "contracts", "entry_px", "exit_px", "pnl_btc", "pnl_pct", "exit_reason"]])
-        tr.to_csv("src/simulated_trades.csv", index=False)
+        tr.to_csv("artifacts/simulated_trades.csv", index=False)
 
 if __name__ == "__main__":
     main()

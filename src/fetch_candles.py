@@ -81,5 +81,5 @@ if __name__ == "__main__":
         end_date="2021-12-31",
         max_records=10000
     )
-    df_2021.to_parquet("src/bitmex_2021_1h.parquet")
-    print("Saved to src/bitmex_2021_1h.parquet")
+    df_2021.to_parquet("data/candles/bitmex_2021_1h.parquet")
+    print("Saved to data/candles/bitmex_2021_1h.parquet")

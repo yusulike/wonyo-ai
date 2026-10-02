@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/*.py": {
+      "includeFiles": "data/candles/bitmex_2021_q2_15m.parquet"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/predict(.*)",

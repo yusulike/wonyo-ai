@@ -33,5 +33,5 @@ print(f"Constructed {len(candles_df):,} 15-minute candles from authentic BitMEX 
 print(candles_df.head())
 print(candles_df.tail())
 
-candles_df.to_parquet("src/bitmex_15m_candles.parquet")
-print("Saved to src/bitmex_15m_candles.parquet")
+candles_df.to_parquet("data/candles/bitmex_15m_candles.parquet")
+print("Saved to data/candles/bitmex_15m_candles.parquet")

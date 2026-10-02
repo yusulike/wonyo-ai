@@ -280,9 +280,9 @@ def run_ladder_backtest(df_candles: pd.DataFrame):
         print(tr_df['exit_reason'].value_counts())
     print("=================================================================")
 
-    tr_df.to_csv("src/ladder_trades.csv", index=False)
-    eq_df.to_csv("src/ladder_equity.csv", index=False)
+    tr_df.to_csv("artifacts/ladder_trades.csv", index=False)
+    eq_df.to_csv("artifacts/ladder_equity.csv", index=False)
 
 if __name__ == "__main__":
-    df = pd.read_parquet("src/bitmex_2021_q2_15m.parquet")
+    df = pd.read_parquet("data/candles/bitmex_2021_q2_15m.parquet")
     run_ladder_backtest(df)

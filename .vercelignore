@@ -4,6 +4,8 @@ aoa_public_2021-12-31_with_letter*
 *.zip
 *.csv
 *.parquet
+# ...except the replay dataset bundled into serverless functions (see vercel.json)
+!data/candles/bitmex_2021_q2_15m.parquet
 .venv
 __pycache__
 *.pyc

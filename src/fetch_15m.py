@@ -66,7 +66,7 @@ def fetch_15m_candles():
             break
 
     df = pd.DataFrame(all_rows).drop_duplicates(subset=["timestamp"]).sort_values("timestamp").reset_index(drop=True)
-    out_file = "src/bitmex_2021_h1_15m.parquet"
+    out_file = "data/candles/bitmex_2021_h1_15m.parquet"
     df.to_parquet(out_file)
     print(f"Saved {len(df):,} 15-minute candles to {out_file}")
 

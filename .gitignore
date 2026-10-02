@@ -15,7 +15,9 @@ aoa_public_2021-12-31_with_letter*
 *.parquet
 *.csv
 *.db
+# Market data & generated analysis outputs (reproducible via src/ scripts)
 data/
+artifacts/
 .pytest_cache/
 .vercel
 uv.lock

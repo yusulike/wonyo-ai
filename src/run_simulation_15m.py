@@ -21,7 +21,7 @@ def main():
     print(" PROJECT AOA: HIGH-RESOLUTION (15m) INSTITUTIONAL SIMULATION    ")
     print("=================================================================")
 
-    data_path = "src/bitmex_2021_q2_15m.parquet"
+    data_path = "data/candles/bitmex_2021_q2_15m.parquet"
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Missing {data_path}")
 
@@ -78,7 +78,7 @@ def main():
     print("=================================================================")
 
     # Save Tear Sheet to JSON
-    with open("src/wonyo_tear_sheet_15m.json", "w") as f:
+    with open("artifacts/wonyo_tear_sheet_15m.json", "w") as f:
         json.dump(ts, f, indent=2)
 
     # Plot Equity Curve & Benchmark
@@ -97,7 +97,7 @@ def main():
     ax2.legend(loc='lower left')
 
     plt.tight_layout()
-    chart_path = "src/wonyo_performance_15m.png"
+    chart_path = "artifacts/wonyo_performance_15m.png"
     plt.savefig(chart_path, dpi=200)
     plt.close()
     print(f"\nSaved performance chart to {chart_path}")
@@ -105,7 +105,7 @@ def main():
     if len(tr) > 0:
         print("\nLast 5 Executed Trades:")
         print(tr.tail(5)[["direction", "contracts", "entry_px", "exit_px", "pnl_btc", "pnl_pct", "exit_reason", "bars_held"]])
-        tr.to_csv("src/simulated_trades_15m.csv", index=False)
+        tr.to_csv("artifacts/simulated_trades_15m.csv", index=False)
 
 if __name__ == "__main__":
     main()

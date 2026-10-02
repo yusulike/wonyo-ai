@@ -152,6 +152,6 @@ summary_out = {
     "short_ratio_pct": float(len(shorts)/len(res)*100)
 }
 import json
-with open("src/wonyo_stats_summary.json", "w") as f:
+with open("artifacts/wonyo_stats_summary.json", "w") as f:
     json.dump(summary_out, f, indent=2)
-print("\nSaved summary to src/wonyo_stats_summary.json")
+print("\nSaved summary to artifacts/wonyo_stats_summary.json")
