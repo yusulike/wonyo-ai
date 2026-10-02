@@ -164,6 +164,7 @@ def save_state(state: Dict[str, Any]) -> None:
 
 def run() -> None:
     max_ticks = int(os.environ.get("WONYO_WORKER_MAX_TICKS", "0"))
+    (ROOT / "data").mkdir(parents=True, exist_ok=True)  # state file + local SQLite ledger home
     db = WonyoDBManager(sqlite_path=str(ROOT / "data" / "worker_trades.db"))
     db.init_db()
     state = load_state()
