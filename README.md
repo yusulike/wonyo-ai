@@ -62,6 +62,12 @@
 - **System One 모델 평가**: 단순 키워드 매칭의 한계를 넘어 문맥을 정밀 판별(호재, 악재, 중립)하고 영향도 점수 및 확신도(Confidence) 도출.
 - **블랙스완 확률 가드 (`Noul`)**: 거래소 파산, 긴급 규제, 대형 해킹 등 시장 붕괴 위험을 감지하여 뇌동매매 및 시스템 리스크 사전 차단.
 
+### 3. 🤖 24시간 상시 자동 체결 워커 (Personal Server)
+- 대시보드는 페이지가 열려있을 때만 동작하지만, 개인 리눅스 서버의 `src/worker.py`(systemd 서비스)가 **24시간 10초 루프**로 대신 심장박동을 유지합니다.
+- 15분 봉 마감 시점 시그널 평가 → 가상 포지션 진입 → SL/TP/60분 스크래치/120분 타임아웃 수명 관리 → 체결 자동 기록.
+- **하이브리드 구조**: 개인 서버 워커(두뇌, Neon Postgres에 기록) + Vercel 대시보드(얼굴, 장부 조회) — 페이지를 닫아도 체결 장부가 24/7 쌓입니다.
+- 설치 및 운용 가이드: **[WORKER.md](WORKER.md)**
+
 ---
 
 ## 🎯 트레이딩 핵심 집중형 UI (Streamlined Interface)
@@ -173,7 +179,7 @@ uv run python src/test_onnx_inference.py
 # TypeSafe Jev System One 감성 분석 검증
 uv run python src/test_predict_api.py
 
-# 28개 전수 단위 테스트 실행
+# 41개 전수 단위 테스트 실행
 uv run pytest
 ```
 
@@ -218,18 +224,27 @@ wonyo-ai/
 │   ├── wonyo_model.py          # 볼륨 흡수 기반 워뇨띠 휴리스틱 행동 모델
 │   ├── feature_extractor.py    # 12대 퀀트 및 오더플로우 지표 추출기
 │   ├── backtester.py           # 메이커 리베이트 반영 백테스터
+│   ├── worker.py               # 24시간 상시 자동 체결 워커 (개인 서버용)
+│   ├── replay_data.py          # 2021 리플레이 캔들 임베디드 모듈 (서버리스 번들용)
+│   ├── embed_replay_dataset.py # replay_data.py 자동 생성 스크립트
 │   ├── web_api.py              # FastAPI 메인 웹 애플리케이션
 │   ├── test_onnx_inference.py  # ONNX 추론 지연시간 벤치마크 스크립트
 │   └── test_predict_api.py     # TypeSafe Jev 및 API 예측 응답 검증 스크립트
 ├── data/candles/               # 시장 캔들 parquet 데이터 (git 추적 제외)
 ├── artifacts/                  # 시뮬레이션 산출물 (티어시트·차트·트레이드 로그)
+├── deploy/                     # 개인 서버 배포 자산
+│   ├── wonyo-worker.service    # systemd 유닛 (24시간 워커 등록용)
+│   └── install_ssh_key.py      # SSH 키 인증 부트스트랩 스크립트
 ├── tests/                      # 자동화 테스트 스위트
 │   ├── test_db.py              # 영구 데이터베이스 및 폴백 로직 검증
 │   ├── test_onnx.py            # ONNX 추론 정확성 및 입출력 규격 검증
 │   ├── test_model.py           # 휴리스틱 행동 모델 단위 테스트
 │   ├── test_service_engine.py  # 서비스 엔진 테스트
 │   ├── test_risk_engine.py     # 켈리 공식 및 리스크 한도 검증
+│   ├── test_worker.py          # 워커 포지션 라이프사이클·BTC 손익 산식 테스트
+│   ├── test_replay_fallback.py # 리플레이 임베디드 폴백 회귀 테스트
 │   └── test_web_api.py         # 웹 API 엔드포인트 및 서버리스 핸들러 테스트
+├── WORKER.md                   # 24시간 워커 설치·운용 가이드
 ├── pyproject.toml              # 프로젝트 메타데이터 및 uv 패키지 정의
 ├── requirements.txt            # Vercel 배포용 경량 런타임 의존성
 ├── vercel.json                 # Vercel 라우팅 및 리라이트 설정

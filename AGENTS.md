@@ -52,6 +52,17 @@
 - **방지 철칙**:
   - 외부 CDN 스크립트는 항상 검증된 버전(`@4.2.0`)을 엄격하게 명시(Version Pinning)하고, API 지원 여부를 확인하는 방어 코드(`typeof chart.addCandlestickSeries === 'function'`)를 병행한다.
 
+### 7. Vercel 람다 번들 누락 및 배포 상태 오판 (2026-10)
+- **실수 내용**: `vercel.json`의 `functions.includeFiles`와 `.vercelignore` 네거이션으로 `data/`의 parquet을 람다에 싣으려 했으나 실제로는 반영되지 않았음. 또한 GitHub 커밋 페이지에 CI 체크가 안 보인다는 이유만으로 "자동 배포가 없다"고 오판하여 원인 진단을 잘못된 방향으로 진행함.
+- **방지 철칙**:
+  - 서버리스에서 런타임에 필요한 데이터는 `src/` 내부의 **트래킹된 Python 모듈로 임베딩**한다(`src/replay_data.py` 참조 — ONNX 모델과 동일하게 import 트레이싱으로 번들이 보장됨). `data/` 디렉터리 파일은 어떤 설정으로도 람다에 들어가지 않음을 실증함.
+  - 배포 여부는 GitHub Deployments API(`api.github.com/repos/<owner>/<repo>/deployments`, 비인증 사용 가능)로 확인한다. push는 약 2분 후 자동 배포되므로 변경 후 반드시 프로덕션 엔드포인트를 직접 curl 검증한다.
+
+### 8. 셸 source 기반 env 로딩 시 URL 특수문자 파손 (2026-10)
+- **실수 내용**: Neon 연결 문자열의 `&`(쿼리 파라미터 구분자)을 sh가 백그라운드 연산자로 해석하여 `source .env` 시 변수값이 잘리고 엉뚱한 커맨드가 실행됨 — "환경변수가 있는데 PG 연결이 안 된다"는 착각을 유발.
+- **방지 철칙**:
+  - `&` 등 특수문자가 포함된 값의 env 파일은 셸 `source`/`. ` 로딩 금지. **Python에서 직접 파싱**하거나 **systemd `EnvironmentFile`**(셸 문법 미해석)을 사용한다.
+
 ---
 
 ## 🧠 워뇨-AI 핵심 퀀트 팩트 & 공식 레퍼런스
@@ -87,3 +98,7 @@
    - **TypeSafe Jev System One (`news_sentiment.py`)**: 실시간 외신 감성 분석(호재/악재/중립), 확률 캘리브레이션, 거래소 파산 등 시스템 붕괴 감지 블랙스완 리스크 가드.
 6. **트레이딩 핵심 집중형 UI 원칙 (Single-Screen Bloomberg Style)**:
    - 1줄 슬림 헤더 $\rightarrow$ 마스터 직감 & ONNX 확률 보드 $\rightarrow$ 390px 클린 차트 $\rightarrow$ 원스톱 포지션 패널 $\rightarrow$ 5행 미니 장부 $\rightarrow$ 하단 Jev AI 속보 티커 바 구성.
+7. **24시간 상시 자동 체결 워커 (`src/worker.py`, 하이브리드 아키텍처)**:
+   - Vercel 대시보드는 페이지가 열려있을 때만 동작(브라우저 10초 폴링이 유일한 심장)하므로, 개인 리눅스 서버에서 systemd 서비스(`deploy/wonyo-worker.service`)로 10초 루프를 상시 구동한다.
+   - 15분 봉 **마감 확정** 시그널 평가(미완성 봉 미사용) $\rightarrow$ 진입 $\rightarrow$ SL/TP 가격 도달, 60분 스크래치(-0.4% 이내 회귀), 120분 하드 타임아웃 순서로 청산 $\rightarrow$ 체결을 Neon Postgres 장부에 자동 기록(대시보드와 공유).
+   - 포지션 수명 규칙과 역산 컨트랙트 BTC 손익 산식은 `tests/test_worker.py`로 테스트 보호. 운용 문서는 `WORKER.md`.
