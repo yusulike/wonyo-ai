@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/*.py": {
-      "includeFiles": "data/candles/bitmex_2021_q2_15m.parquet"
+      "includeFiles": "{data/candles/bitmex_2021_q2_15m.parquet,src/wonyo_nn_model.onnx,src/wonyo_nn_model.onnx.data}"
     }
   },
   "rewrites": [
