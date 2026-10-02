@@ -471,6 +471,7 @@ class WonyoDBManager:
             logger.warning(f"init_db call in get_trades_history: {e}")
 
         live_trades: List[Dict[str, Any]] = []
+        data_source = "sqlite"
 
         try:
             if self.use_postgres:
@@ -502,6 +503,7 @@ class WonyoDBManager:
                                 "holding_time": r[12],
                                 "bars_held": r[13]
                             })
+                        data_source = "postgres"
                         pg_conn.close()
                     except Exception as e:
                         logger.warning(f"Failed to query Postgres trades: {e}")
@@ -562,7 +564,7 @@ class WonyoDBManager:
 
             return {
                 "status": "SUCCESS",
-                "storage_type": "Vercel Postgres (Neon)" if (self.use_postgres and live_trades and live_trades != DEFAULT_SEED_TRADES) else "SQLite (Local/Fallback)",
+                "storage_type": "Vercel Postgres (Neon)" if data_source == "postgres" else "SQLite (Local/Fallback)",
                 "summary": {
                     "initial_seed_btc": initial_seed,
                     "current_seed_btc": current_seed,
